@@ -1,0 +1,14 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+
+server:
+  servlet:
+    context-path: /${spring.application.name}
+
+logging:
+  level:
+    org:
+      springframework: INFO

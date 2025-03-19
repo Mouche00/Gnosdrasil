@@ -1,0 +1,30 @@
+spring:
+
+  profiles:
+    active: dev
+
+  config:
+    import: optional:file:.env[.properties]
+
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      pool-name: JwtDemoCP
+
+  # Keycloak Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://${KC_HOST:localhost}:${KC_PORT:8080}/auth/realms/${KC_REALM}/protocol/openid-connect/certs
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8080}

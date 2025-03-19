@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: gd-external-resource-service
+
+serpapi:
+  api:
+    key: e53ffd627006643629ab55d24169cbf52a6257c826583bc265aa4ec918f22d8d

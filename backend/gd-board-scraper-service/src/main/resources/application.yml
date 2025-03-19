@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: gd-board-scraper-service
+  config:
+    import: optional:file:.env[.properties]
+  data:
+    mongodb:
+      host: ${MONGODB_HOST:localhost}
+      port: ${MONGODB_PORT:27017}
+      database: ${MONGODB_DB}
+      username: ${MONGODB_USER}
+      password: ${MONGODB_PASSWORD}
+      authentication-database: ${MONGODB_AUTH:admin}
+#    servlet:
+#      multipart:
+#        enabled: true
+#        max-file: 10MB
+#        request-size: 10MB
+server:
+  port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    root: info
+
+
+selenium:
+  grid:
+    url: http://${SELENIUM_GRID_HOST:localhost}:${SELENIUM_GRID_PORT:4444}
+
+scraper:
+  linkedin:
+    selectors:
+      job-urn-selector: base-card
+      title-selector: base-card__full-link
+#      company-selector: .jobs-unified-top-card__company-name
+#      location-selector: .jobs-unified-top-card__bullet
+#      salary-selector: .jobs-unified-top-card__salary-details
+#      description-selector: .jobs-description-content__text
+      date-posted-selector: job-search-card__listdate
+    attributes:
+      job-urn-attribute: data-entity-urn
