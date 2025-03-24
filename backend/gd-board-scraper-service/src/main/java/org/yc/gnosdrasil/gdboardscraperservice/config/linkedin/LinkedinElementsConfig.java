@@ -1,12 +1,11 @@
 package org.yc.gnosdrasil.gdboardscraperservice.config.linkedin;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "scraper.linkedin.attributes")
 @Getter
-public class LinkedinAttributeConfig {
+public class LinkedinElementsConfig {
     private String jobUrnAttribute;
     private String datePostedSelector;
 }

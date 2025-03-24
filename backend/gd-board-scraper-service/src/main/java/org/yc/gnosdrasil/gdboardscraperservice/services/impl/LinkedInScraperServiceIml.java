@@ -2,23 +2,18 @@ package org.yc.gnosdrasil.gdboardscraperservice.services.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.remote.RemoteWebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.yc.gnosdrasil.gdboardscraperservice.config.linkedin.LinkedinSelectorConfig;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.JobListing;
-import org.yc.gnosdrasil.gdboardscraperservice.entities.ScraperJob;
+import org.yc.gnosdrasil.gdboardscraperservice.entities.ScraperResult;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.SearchParams;
 import org.yc.gnosdrasil.gdboardscraperservice.services.LinkedInScraperService;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.SeleniumHelper;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,10 +101,10 @@ public class LinkedInScraperServiceIml implements LinkedInScraperService {
     @Async
     public CompletableFuture<String> startScrapingJob(SearchParams searchParams) {
         // Create a new job
-        ScraperJob job = ScraperJob.builder()
+        ScraperResult job = ScraperResult.builder()
                 .status(RUNNING)
                 .progress(0)
-                .request(searchParams)
+                .searchParams(searchParams)
                 .build();
 //        job.addLog("Starting LinkedIn job scraper...");
 
@@ -143,7 +138,7 @@ public class LinkedInScraperServiceIml implements LinkedInScraperService {
     /**
      * Main scraping method
      */
-    private List<JobListing> scrapeJobs(SearchParams searchParams, ScraperJob job) {
+    private List<JobListing> scrapeJobs(SearchParams searchParams, ScraperResult job) {
         List<JobListing> jobListings = new ArrayList<>();
 
         try {
@@ -202,7 +197,7 @@ public class LinkedInScraperServiceIml implements LinkedInScraperService {
             throw new RuntimeException("Failed to scrape LinkedIn jobs", e);
         } finally {
             // Close the WebDriver
-            seleniumHelper.shutDownScraper();
+            seleniumHelper.releaseDriver();
         }
 
         return jobListings;
@@ -222,33 +217,22 @@ public class LinkedInScraperServiceIml implements LinkedInScraperService {
 //            wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".details-pane__content")));
 
             // Extract job information
-            String jobUrn = seleniumHelper.getAttributeByClassName(jobElement, selectors.getJobUrnSelector(),"data-entity-urn");
-//            String element = findElementByCssSelector(jobElement, selectors.getJobUrnSelector()).getDomAttribute("data-entity-urn");
-            String title = seleniumHelper.getTextByClassName(jobElement, selectors.getTitleSelector());
-//            String company = getTextSafely(".jobs-unified-top-card__company-name");
-//            String location = getTextSafely(".jobs-unified-top-card__bullet");
+            String jobUrn = seleniumHelper.getAttributeByClassName(jobElement, selectors.jobUrnSelector(),"data-entity-urn");
+            String title = seleniumHelper.getTextByClassName(jobElement, selectors.titleSelector());
+            String company = seleniumHelper.getTextByClassName(jobElement, selectors.companySelector());
+            String location = seleniumHelper.getTextByClassName(jobElement, selectors.locationSelector());
 //            String salary = getTextSafely(".jobs-unified-top-card__salary-details");
 //            String description = getTextSafely(".jobs-description-content__text");
-            String datePosted = seleniumHelper.getAttributeByClassName(jobElement,selectors.getDatePostedSelector(),"datetime");
+            String datePosted = seleniumHelper.getAttributeByClassName(jobElement,selectors.datePostedSelector(),"datetime");
 //            String url = driver.getCurrentUrl();
 
             JobListing job = JobListing.builder()
                     .jobId(getLastSubString(jobUrn, urnSeparator))
                     .title(title)
+                    .company(company)
+                    .location(location)
                     .datePosted(LocalDate.parse(datePosted))
                     .build();
-
-
-            // Create and return job listing
-//            JobListing job = new JobListing();
-//            job.setTitle(title);
-//            job.setCompany(company);
-//            job.setLocation(location);
-//            job.setSalary(salary);
-//            job.setDescription(description);
-//            job.setDatePosted(LocalDate.parse(datePosted));
-//            job.setUrl(url);
-//            job.setScrapedAt(LocalDateTime.now());
 
             log.info("Extracted job details: {}", job.toString());
 

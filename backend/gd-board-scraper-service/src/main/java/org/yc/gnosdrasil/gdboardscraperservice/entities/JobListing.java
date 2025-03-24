@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
@@ -20,9 +21,17 @@ public class JobListing extends BaseEntity<String> {
     private String title;
     private String company;
     private String location;
-    private LocalDate datePosted;
+    private String salary;
     private String description;
-
+    private String datePosted;
     private String url;
-//    private LocalDateTime scrapedAt;
+    private String applyUrl;
+    private String jobType;
+    private String experienceLevel;
+
+    @DBRef
+    private ScraperResult scraperResult;
+
+    @DBRef
+    private SearchParams searchParams;
 }

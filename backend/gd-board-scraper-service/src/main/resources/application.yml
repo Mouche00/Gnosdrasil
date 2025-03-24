@@ -28,15 +28,38 @@ selenium:
   grid:
     url: http://${SELENIUM_GRID_HOST:localhost}:${SELENIUM_GRID_PORT:4444}
 
+#scraper:
+#  linkedin:
+#    selectors:
+#      job-urn-elementLocator: base-card
+#      title-elementLocator: base-search-card__title
+#      company-elementLocator: base-search-card__subtitle
+#      location-elementLocator: job-search-card__location
+##      salary-elementLocator: .jobs-unified-top-card__salary-details
+##      description-elementLocator: .jobs-description-content__text
+#      date-posted-elementLocator: job-search-card__listdate
+#    attributes:
+#      job-urn-attribute: data-entity-urn
+#      date-posted-attribute: data-entity-urn
+
+
 scraper:
   linkedin:
-    selectors:
-      job-urn-selector: base-card
-      title-selector: base-card__full-link
-#      company-selector: .jobs-unified-top-card__company-name
-#      location-selector: .jobs-unified-top-card__bullet
-#      salary-selector: .jobs-unified-top-card__salary-details
-#      description-selector: .jobs-description-content__text
-      date-posted-selector: job-search-card__listdate
-    attributes:
-      job-urn-attribute: data-entity-urn
+    elements:
+      id:
+        selector: base-card
+        attribute: data-entity-urn
+        pattern: /([^\/]+)$/
+      title:
+        selector: base-search-card__title
+      company:
+        selector: base-search-card__subtitle
+      location:
+        selector: job-search-card__location
+#      salary:
+#        elementLocator: .jobs-unified-top-card__salary-details
+#      description:
+#        elementLocator: .jobs-description-content__text
+      date-posted:
+        selector: job-search-card__listdate
+        attribute: datetime

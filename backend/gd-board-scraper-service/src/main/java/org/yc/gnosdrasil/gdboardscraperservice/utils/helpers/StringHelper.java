@@ -1,5 +1,11 @@
 package org.yc.gnosdrasil.gdboardscraperservice.utils.helpers;
 
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+@Slf4j
 public class StringHelper {
 
     /**
@@ -23,5 +29,28 @@ public class StringHelper {
     public static String getLastSubString(String text, String separator) {
         String[] subStrings = splitBySeparator(text, separator);
         return subStrings[subStrings.length - 1];
+    }
+
+    /**
+     * Apply a regex pattern to extract specific content
+     */
+    public String applyRegexPattern(String input, String regexPattern, String defaultValue) {
+        if (input == null || regexPattern == null) {
+            return defaultValue;
+        }
+
+        try {
+            Pattern pattern = Pattern.compile(regexPattern);
+            Matcher matcher = pattern.matcher(input);
+
+            if (matcher.find()) {
+                // Return the first capturing group, or the entire match if no groups
+                return matcher.groupCount() > 0 ? matcher.group(1) : matcher.group();
+            }
+        } catch (Exception e) {
+            log.debug("Error applying regex pattern: {}", regexPattern, e);
+        }
+
+        return defaultValue;
     }
 }

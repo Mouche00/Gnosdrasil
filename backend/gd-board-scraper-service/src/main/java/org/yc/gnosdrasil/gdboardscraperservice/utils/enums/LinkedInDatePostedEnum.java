@@ -1,5 +1,6 @@
 package org.yc.gnosdrasil.gdboardscraperservice.utils.enums;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
@@ -9,12 +10,5 @@ public enum LinkedInDatePostedEnum {
     PAST_MONTH("r2592000", "Past month");
 
 
-    LinkedInDatePostedEnum(String id, String label) {
-
-    }
-
-//    @Override
-//    public String toString() {
-//        return label;
-//    }
+    LinkedInDatePostedEnum(String id, String label) {}
 }

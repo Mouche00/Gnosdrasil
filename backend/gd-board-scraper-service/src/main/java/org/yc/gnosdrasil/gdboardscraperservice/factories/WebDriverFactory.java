@@ -1,4 +1,4 @@
-package org.yc.gnosdrasil.gdboardscraperservice.config;
+package org.yc.gnosdrasil.gdboardscraperservice.factories;
 
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +18,7 @@ public class WebDriverFactory {
     private String seleniumGridUrl;
 
     private final ThreadLocal<RemoteWebDriver> driverThreadLocal = new ThreadLocal<>();
+
 
     /**
      * Get a WebDriver instance. Creates a new one if none exists or if the current one is invalid.
