@@ -76,7 +76,7 @@ scraper:
       experience-level-property: "f_E"
       date-posted-property: "f_TPR"
     job-listings-container-element-locator:
-      locator-type: CLASS_NAME
+      locator-type: CSS
       locator-string: "jobs-search__results-list"
     job-item-element-locator:
       locator-type: TAG_NAME
@@ -85,12 +85,11 @@ scraper:
       - field: JOB_ID
         selector:
           element-locator:
-            locator-type: CLASS_NAME
+            locator-type: CSS
             locator-string: "base-card"
           attribute-selector:
             attribute-type: ATTRIBUTE
-            attribute-name: "data-entity-urn"
-          regex-pattern: "urn:li:jobPosting:(\\d+)"
+            attribute-name: "data-job-id"
     page-load-wait-time: 10
     element-wait-time: 5
     max-pages: 5

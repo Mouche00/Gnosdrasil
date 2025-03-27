@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.yc.gnosdrasil.gdboardscraperservice.utils.enums.LinkedInDatePostedEnum;
 
 import java.util.List;
 

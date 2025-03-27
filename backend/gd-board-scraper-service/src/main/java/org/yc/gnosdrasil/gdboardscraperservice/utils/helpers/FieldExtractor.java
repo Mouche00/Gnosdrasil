@@ -3,18 +3,17 @@ package org.yc.gnosdrasil.gdboardscraperservice.utils.helpers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebElement;
-import org.yc.gnosdrasil.gdboardscraperservice.utils.enums.common.AttributeType;
-import org.yc.gnosdrasil.gdboardscraperservice.utils.records.AttributeSelector;
-import org.yc.gnosdrasil.gdboardscraperservice.utils.records.ElementLocator;
+import org.springframework.stereotype.Component;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.records.FieldSelector;
 
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.StringHelper.applyRegexPattern;
 
 /**
  * Extracts field values from WebElements using different strategies
  */
+@Component
 @Slf4j
 @RequiredArgsConstructor
 public class FieldExtractor {
@@ -51,7 +50,11 @@ public class FieldExtractor {
             }
 
             // Extract the value using the specified extraction type
-            String value = seleniumHelper.extractValueByType(targetElement.get(), fieldSelector.attributeSelector());
+            String value = targetElement.map(e -> seleniumHelper.extractValueByType(e, fieldSelector.attributeSelector())).orElse(null);
+
+            if (!fieldSelector.regexPattern().isBlank()) {
+                value = applyRegexPattern(value, fieldSelector.regexPattern(), DEFAULT_NOT_FOUND_VALUE);
+            }
 
             return value != null && !value.isEmpty() ? value : DEFAULT_NOT_FOUND_VALUE;
 

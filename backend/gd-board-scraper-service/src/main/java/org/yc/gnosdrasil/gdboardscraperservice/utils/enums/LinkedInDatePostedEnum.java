@@ -1,6 +1,5 @@
 package org.yc.gnosdrasil.gdboardscraperservice.utils.enums;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter

@@ -3,22 +3,20 @@ package org.yc.gnosdrasil.gdboardscraperservice.utils.helpers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Component;
-import org.yc.gnosdrasil.gdboardscraperservice.factories.WebDriverFactory;
+import org.yc.gnosdrasil.gdboardscraperservice.factories.driver.WebDriverManager;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.records.AttributeSelector;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.records.ElementLocator;
-import org.yc.gnosdrasil.gdboardscraperservice.utils.records.FieldSelector;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Helper class for Selenium WebDriver operations with improved error handling and safety.
@@ -28,7 +26,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class SeleniumHelper {
 
-    private final WebDriverFactory webDriverFactory;
+    private final WebDriverManager webDriverManager;
 
     /**
      * Default value to return when element text or attribute is not found
@@ -37,20 +35,37 @@ public class SeleniumHelper {
     private static final int DEFAULT_WAIT_DURATION_IN_SECONDS = 30;
 
     public RemoteWebDriver getDriver() {
-        return webDriverFactory.getDriver();
+        return webDriverManager.getDriver();
     }
 
     /**
      * Find an element using the specified selector
      */
     public Optional<WebElement> findElement(WebElement parentElement, ElementLocator elementLocator) {
-        return switch (elementLocator.selectorType()) {
-            case CSS -> findElementsByCssSelector(parentElement, elementLocator.locatorString())
-                    .stream().findFirst();
-            case XPATH -> findElementsByXPath(parentElement, elementLocator.locatorString())
-                    .stream().findFirst();
+        return switch (elementLocator.locatorType()) {
+            case CSS -> findElementByCssSelector(parentElement, elementLocator.locatorString());
+            case XPATH -> findElementByXPath(parentElement, elementLocator.locatorString());
             case CLASS_NAME -> findElementByClassName(parentElement, elementLocator.locatorString());
+            case TAG_NAME -> findElementByTagName(parentElement, elementLocator.locatorString());
         };
+    }
+
+    public List<WebElement> findElements(WebElement parentElement, ElementLocator elementLocator) {
+        return switch (elementLocator.locatorType()) {
+            case CSS -> findElementsByCssSelector(parentElement, elementLocator.locatorString());
+            case XPATH -> findElementsByXPath(parentElement, elementLocator.locatorString());
+            case CLASS_NAME -> findElementsByClassName(parentElement, elementLocator.locatorString());
+            case TAG_NAME -> findElementsByTagName(parentElement, elementLocator.locatorString());
+        };
+    }
+
+    public void waitForElement(ElementLocator elementLocator) {
+        switch (elementLocator.locatorType()) {
+            case CSS -> waitUntilElementLoadsByCssSelector(elementLocator.locatorString());
+            case XPATH -> waitUntilElementLoadsByXPath(elementLocator.locatorString());
+            case CLASS_NAME -> waitUntilElementLoadsByClassName(elementLocator.locatorString());
+            case TAG_NAME -> waitUntilElementLoadsByTagName(elementLocator.locatorString());
+        }
     }
 
 
@@ -70,7 +85,7 @@ public class SeleniumHelper {
                 try {
                     String js = "return window.getComputedStyle(arguments[0]).getPropertyValue('" +
                             attributeSelector.attributeName() + "');";
-                    return (String) ((org.openqa.selenium.JavascriptExecutor)
+                    return (String) ((JavascriptExecutor)
                             getDriver()).executeScript(js, element);
                 } catch (Exception e) {
                     log.debug("Failed to get computed style", e);
@@ -101,6 +116,42 @@ public class SeleniumHelper {
             log.debug("Could not find elements with XPath elementLocator: {}", xpathSelector, e);
             return Collections.emptyList();
         }
+    }
+
+    public Optional<WebElement> findElementByXPath(WebElement parentElement, String xpathSelector) {
+        return findElementsByXPath(parentElement, xpathSelector).stream().findFirst();
+    }
+
+    /**
+     * Find elements by tag name
+     *
+     * @param parentElement The parent element to search within, or null to search from root
+     * @param tagName The tag name to search for
+     * @return List of found elements or empty list if none found
+     */
+    public List<WebElement> findElementsByTagName(WebElement parentElement, String tagName) {
+        try {
+            log.debug("Looking up elements with tag name: {}", tagName);
+            if (parentElement != null) {
+                return parentElement.findElements(By.tagName(tagName));
+            } else {
+                return getDriver().findElements(By.tagName(tagName));
+            }
+        } catch (Exception e) {
+            log.debug("Could not find elements with tag name: {}", tagName, e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Find a single element by tag name
+     *
+     * @param parentElement The parent element to search within, or null to search from root
+     * @param tagName The tag name to search for
+     * @return Optional containing the element if found, empty Optional otherwise
+     */
+    public Optional<WebElement> findElementByTagName(WebElement parentElement, String tagName) {
+        return findElementsByTagName(parentElement, tagName).stream().findFirst();
     }
 
     /**
@@ -135,6 +186,7 @@ public class SeleniumHelper {
         List<WebElement> elements = findElementsByCssSelector(parentElement, className);
         return elements.stream().findFirst();
     }
+
 
     /**
      * Find elements by class name (partial match using XPath)
@@ -301,6 +353,19 @@ public class SeleniumHelper {
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(xpathSelector)));
     }
 
+    public void waitUntilElementLoadsByCssSelector(String cssSelector, int waitDurationInSeconds) {
+
+        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(waitDurationInSeconds));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(cssSelector)));
+    }
+
+    public void waitUntilElementLoadsByCssSelector(String cssSelector) {
+        log.info("Waiting for element to load by CSS selector: {}", cssSelector);
+        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(DEFAULT_WAIT_DURATION_IN_SECONDS));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(cssSelector)));
+        log.info("Element loaded by CSS selector: {}", cssSelector);
+    }
+
     public void waitUntilElementLoadsByClassName(String className, int waitDurationInSeconds) {
 
         WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(waitDurationInSeconds));
@@ -317,13 +382,28 @@ public class SeleniumHelper {
                         String.format(".//*[contains(@class, '%s')]", className))));
     }
 
+    public void waitUntilElementLoadsByTagName(String tagName, int waitDurationInSeconds) {
+
+        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(waitDurationInSeconds));
+        wait.until(ExpectedConditions.presenceOfElementLocated(
+                By.tagName(tagName)));
+    }
+
+    public void waitUntilElementLoadsByTagName(String tagName) {
+
+        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(DEFAULT_WAIT_DURATION_IN_SECONDS));
+        wait.until(ExpectedConditions.presenceOfElementLocated(
+                By.tagName(tagName)));
+    }
+
     public void goToPage(String url) {
         if (url.isBlank()) throw new RuntimeException("Can't go to the page, provided url is empty or null");
+        log.info("Navigating to page: {}", url);
         getDriver().get(url);
-        log.debug("Current page title {}", getDriver().getTitle());
+        log.info("Current page title {}", getDriver().getTitle());
     }
 
     public void releaseDriver() {
-        webDriverFactory.releaseDriver();
+        webDriverManager.releaseDriver();
     }
 }

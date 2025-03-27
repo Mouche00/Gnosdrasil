@@ -29,7 +29,9 @@ services:
       - "7900:7900"
     environment:
       SE_VNC_NO_PASSWORD: 1
-      SE_NODE_SESSION_TIMEOUT: 60
+      SE_NODE_SESSION_TIMEOUT: 300
+      SE_NODE_OVERRIDE_MAX_SESSIONS: true
+      SE_NODE_MAX_SESSIONS: 5
     shm_size: 2g
     restart: unless-stopped
 

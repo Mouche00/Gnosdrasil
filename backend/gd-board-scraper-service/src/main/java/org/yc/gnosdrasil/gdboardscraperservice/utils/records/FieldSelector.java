@@ -9,7 +9,7 @@ import lombok.Builder;
 public record FieldSelector(
         ElementLocator elementLocator,
         AttributeSelector attributeSelector,
-//        String regexPattern,
+        String regexPattern,
         boolean clickBeforeExtract
 ) {
 }

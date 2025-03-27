@@ -34,7 +34,7 @@ public class StringHelper {
     /**
      * Apply a regex pattern to extract specific content
      */
-    public String applyRegexPattern(String input, String regexPattern, String defaultValue) {
+    public static String applyRegexPattern(String input, String regexPattern, String defaultValue) {
         if (input == null || regexPattern == null) {
             return defaultValue;
         }

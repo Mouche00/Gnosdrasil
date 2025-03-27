@@ -1,27 +1,23 @@
-package org.yc.gnosdrasil.gdboardscraperservice.scraper;
+package org.yc.gnosdrasil.gdboardscraperservice.services;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.remote.RemoteWebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.springframework.web.util.UriBuilder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.yc.gnosdrasil.gdboardscraperservice.config.common.JobBoardConfig;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.JobListing;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.ScraperResult;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.SearchParams;
-import org.yc.gnosdrasil.gdboardscraperservice.factories.WebDriverFactory;
+import org.yc.gnosdrasil.gdboardscraperservice.utils.enums.ScraperJobStatus;
+import org.yc.gnosdrasil.gdboardscraperservice.utils.enums.common.JobField;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.FieldExtractor;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.SeleniumHelper;
+import org.yc.gnosdrasil.gdboardscraperservice.utils.records.JobSelector;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.records.SearchProperties;
 
-import java.net.URI;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class JobScraperEngine {
+public abstract class JobScraperEngine {
 
 //    private final WebDriverFactory webDriverFactory;
     private final SeleniumHelper seleniumHelper;
@@ -45,40 +41,35 @@ public class JobScraperEngine {
 //        ScraperResult result = new ScraperResult();
 
         try {
-            log.info("Starting job scraping for {}", config.boardName());
+            log.info("Starting job scraping for {}", config.getBoardName());
 
             // Build and navigate to search URL
             String searchUrl = buildSearchUrl(searchParams);
-            log.info("Navigating to search URL: {}", searchUrl);
             seleniumHelper.goToPage(searchUrl);
 
             // Wait for page to load
-
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(config.getPageLoadWaitTime()));
-            wait.until(ExpectedConditions.presenceOfElementLocated(
-                    getByLocator(config.getJobListingsContainerSelector(), config.getJobListingsContainerSelectorType())));
+            seleniumHelper.waitForElement(config.getJobListingsContainerElementLocator());
 
             // Scrape multiple pages
             int currentPage = 1;
-            int maxPages = config.getMaxPages() > 0 ? config.getMaxPages() : Integer.MAX_VALUE;
-
-            while (currentPage <= maxPages) {
-                log.info("Scraping page {} of {}", currentPage, config.getBoardName());
+//            int maxPages = config.getMaxPages() > 0 ? config.getMaxPages() : Integer.MAX_VALUE;
+//
+//            while (currentPage <= maxPages) {
+//                log.info("Scraping page {} of {}", currentPage, config.getBoardName());
 
                 // Find job listings container
-                List<WebElement> containers = findElements(null,
-                        config.getJobListingsContainerSelector(),
-                        config.getJobListingsContainerSelectorType());
+                Optional<WebElement> container = seleniumHelper.findElement(null,
+                        config.getJobListingsContainerElementLocator());
 
-                if (containers.isEmpty()) {
-                    log.warn("Job listings container not found");
-                    break;
-                }
 
-                // Find all job items
-                List<WebElement> jobItems = findElements(containers.get(0),
-                        config.getJobItemSelector(),
-                        config.getJobItemSelectorType());
+
+//                if (containers.isEmpty()) {
+//                    log.warn("Job listings container not found");
+//                    break;
+//                }
+            // Find all job items
+            List<WebElement> jobItems = container.map(c -> seleniumHelper.findElements(c, config.getJobItemElementLocator()))
+                    .orElseThrow(() -> new RuntimeException("no job listing container found"));
 
                 log.info("Found {} job listings on page {}", jobItems.size(), currentPage);
 
@@ -100,56 +91,55 @@ public class JobScraperEngine {
                 }
 
                 // Check if there's a next page and navigate to it
-                if (!navigateToNextPage(driver)) {
-                    log.info("No more pages to scrape");
-                    break;
-                }
+//                if (!navigateToNextPage(driver)) {
+//                    log.info("No more pages to scrape");
+//                    break;
+//                }
 
-                currentPage++;
-            }
+//                currentPage++;
+//            }
 
             log.info("Job scraping completed. Found {} job listings", jobListings.size());
 
-            result.setSuccess(true);
-            result.setJobListings(jobListings);
-            result.setTotalJobs(jobListings.size());
-            result.setMessage("Successfully scraped " + jobListings.size() + " jobs from " + config.getBoardName());
+            return ScraperResult.builder()
+                    .status(ScraperJobStatus.COMPLETED)
+//                    .jobListings(jobListings)
+                    .jobsFound(jobListings.size())
+                    .boardName(config.getBoardName())
+                    .build();
 
         } catch (Exception e) {
             log.error("Error during job scraping", e);
-            result.setSuccess(false);
-            result.setMessage("Error during scraping: " + e.getMessage());
-            result.setJobListings(jobListings); // Return any jobs that were successfully scraped
+            return ScraperResult.builder()
+                    .status(ScraperJobStatus.FAILED)
+                    .boardName(config.getBoardName())
+//                    .jobListings(jobListings) // Return any jobs that were successfully scraped
+                    .build();
         } finally {
             // Always release the driver
             seleniumHelper.releaseDriver();
         }
-
-        return result;
     }
 
     /**
      * Extract job details from a job listing element
      */
     private JobListing extractJobListing(WebElement jobElement) {
-        JobListing.JobListingBuilder builder = JobListing.builder()
-                .sourceBoardName(config.getBoardName());
+        JobListing.JobListingBuilder builder = JobListing.builder();
 
         // Extract each configured field
-        for (Map.Entry<JobBoardConfig.JobField, JobBoardConfig.FieldSelector> entry :
-                config.getFieldSelectors().entrySet()) {
+        for (JobSelector jobSelector : config.getJobSelectors()) {
 
-            JobBoardConfig.JobField field = entry.getKey();
-            JobBoardConfig.FieldSelector selector = entry.getValue();
-
-            String value = fieldExtractor.extractValue(jobElement, selector);
-            builder.customFields(Map.of(field.name(), value));
+            String value = fieldExtractor.extractValue(jobElement, jobSelector.selector());
 
             // Also set the standard field if it's one of the predefined ones
-            builder = setStandardField(builder, field, value);
+            builder = setStandardField(builder, jobSelector.field(), value);
         }
 
-        return builder.build();
+        JobListing job = builder.build();
+        log.info("Extracted job: {}", job);
+
+        return job;
     }
 
     /**
@@ -157,31 +147,31 @@ public class JobScraperEngine {
      */
     private JobListing.JobListingBuilder setStandardField(
             JobListing.JobListingBuilder builder,
-            JobBoardConfig.JobField field,
+            JobField field,
             String value) {
 
-        switch (field) {
-            case JOB_ID: return builder.id(value);
-            case TITLE: return builder.title(value);
-            case COMPANY: return builder.company(value);
-            case LOCATION: return builder.location(value);
-            case SALARY: return builder.salary(value);
-            case DESCRIPTION: return builder.description(value);
-            case DATE_POSTED: return builder.datePosted(value);
-            case URL: return builder.url(value);
-            case APPLY_URL: return builder.applyUrl(value);
-            case JOB_TYPE: return builder.jobType(value);
-            case EXPERIENCE_LEVEL: return builder.experienceLevel(value);
-            default: return builder;
-        }
+        return switch (field) {
+            case JOB_ID -> builder.jobId(value);
+            case TITLE -> builder.title(value);
+            case COMPANY -> builder.company(value);
+            case LOCATION -> builder.location(value);
+            case SALARY -> builder.salary(value);
+            case DESCRIPTION -> builder.description(value);
+            case DATE_POSTED -> builder.datePosted(value);
+            case URL -> builder.url(value);
+            case APPLY_URL -> builder.applyUrl(value);
+            case JOB_TYPE -> builder.jobType(value);
+            case EXPERIENCE_LEVEL -> builder.experienceLevel(value);
+            default -> builder;
+        };
     }
 
     /**
      * Build the search URL by replacing placeholders with search parameters
      */
     private String buildSearchUrl(SearchParams searchParams) {
-        SearchProperties props = config.searchProperties();
-        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(config.baseUrl());
+        SearchProperties props = config.getSearchProperties();
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(config.getBaseUrl());
 
         List<String> keywords = searchParams.getKeywords();
         if (keywords != null && !keywords.isEmpty()) {
@@ -209,62 +199,30 @@ public class JobScraperEngine {
      * Navigate to the next page of results
      * @return true if navigation was successful, false if there are no more pages
      */
-    private boolean navigateToNextPage(RemoteWebDriver driver) {
-        try {
-            // Find the next button
-            List<WebElement> nextButtons = findElements(null,
-                    config.getNextPageSelector(),
-                    config.getNextPageSelectorType());
-
-            if (nextButtons.isEmpty() || !nextButtons.get(0).isEnabled() ||
-                    !nextButtons.get(0).isDisplayed()) {
-                return false;
-            }
-
-            // Click next page
-            nextButtons.get(0).click();
-
-            // Wait for the next page to load
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(config.getPageLoadWaitTime()));
-            wait.until(ExpectedConditions.presenceOfElementLocated(
-                    getByLocator(config.getJobListingsContainerSelector(), config.getJobListingsContainerSelectorType())));
-
-            return true;
-        } catch (Exception e) {
-            log.error("Error navigating to next page", e);
-            return false;
-        }
-    }
-
-    /**
-     * Find elements using the specified selector and selector type
-     */
-    private List<WebElement> findElements(WebElement parentElement, String selector, JobBoardConfig.SelectorType selectorType) {
-        switch (selectorType) {
-            case CSS:
-                return seleniumHelper.findElementsByCssSelector(parentElement, selector);
-            case XPATH:
-                return seleniumHelper.findElementsByXPath(parentElement, selector);
-            case CLASS_NAME:
-                return seleniumHelper.findElementsByClassName(parentElement, selector);
-            default:
-                return new ArrayList<>();
-        }
-    }
-
-    /**
-     * Get a By locator for the specified selector and selector type
-     */
-    private org.openqa.selenium.By getByLocator(String selector, JobBoardConfig.SelectorType selectorType) {
-        switch (selectorType) {
-            case CSS:
-                return org.openqa.selenium.By.cssSelector(selector);
-            case XPATH:
-                return org.openqa.selenium.By.xpath(selector);
-            case CLASS_NAME:
-                return org.openqa.selenium.By.className(selector);
-            default:
-                throw new IllegalArgumentException("Unsupported selector type: " + selectorType);
-        }
-    }
+//    private boolean navigateToNextPage(RemoteWebDriver driver) {
+//        try {
+//            // Find the next button
+//            List<WebElement> nextButtons = findElements(null,
+//                    config.getNextPageSelector(),
+//                    config.getNextPageSelectorType());
+//
+//            if (nextButtons.isEmpty() || !nextButtons.get(0).isEnabled() ||
+//                    !nextButtons.get(0).isDisplayed()) {
+//                return false;
+//            }
+//
+//            // Click next page
+//            nextButtons.get(0).click();
+//
+//            // Wait for the next page to load
+//            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(config.getPageLoadWaitTime()));
+//            wait.until(ExpectedConditions.presenceOfElementLocated(
+//                    getByLocator(config.getJobListingsContainerSelector(), config.getJobListingsContainerSelectorType())));
+//
+//            return true;
+//        } catch (Exception e) {
+//            log.error("Error navigating to next page", e);
+//            return false;
+//        }
+//    }
 }
