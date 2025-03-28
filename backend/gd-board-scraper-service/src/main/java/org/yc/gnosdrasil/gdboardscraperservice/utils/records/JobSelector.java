@@ -1,6 +1,6 @@
 package org.yc.gnosdrasil.gdboardscraperservice.utils.records;
 
-import org.yc.gnosdrasil.gdboardscraperservice.utils.enums.common.JobField;
+import org.yc.gnosdrasil.gdboardscraperservice.utils.enums.JobField;
 
 public record JobSelector(JobField field, FieldSelector selector) {
 }

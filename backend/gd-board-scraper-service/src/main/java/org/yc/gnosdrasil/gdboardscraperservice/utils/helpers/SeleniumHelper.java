@@ -9,7 +9,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.stereotype.Component;
-import org.yc.gnosdrasil.gdboardscraperservice.factories.driver.WebDriverManager;
+import org.yc.gnosdrasil.gdboardscraperservice.utils.enums.LocatorType;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.records.AttributeSelector;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.records.ElementLocator;
 
@@ -38,25 +38,43 @@ public class SeleniumHelper {
         return webDriverManager.getDriver();
     }
 
+    public void clickElement(WebElement jobElement) {
+        try {
+            if (jobElement != null && jobElement.isDisplayed() && jobElement.isEnabled()) {
+                jobElement.click();
+                log.debug("Clicked on element: {}", jobElement);
+            } else {
+                log.warn("Element is not clickable: {}", jobElement);
+            }
+        } catch (Exception e) {
+            log.error("Error clicking element: {}", e.getMessage(), e);
+        }
+    }
+
     /**
      * Find an element using the specified selector
      */
     public Optional<WebElement> findElement(WebElement parentElement, ElementLocator elementLocator) {
-        return switch (elementLocator.locatorType()) {
-            case CSS -> findElementByCssSelector(parentElement, elementLocator.locatorString());
-            case XPATH -> findElementByXPath(parentElement, elementLocator.locatorString());
-            case CLASS_NAME -> findElementByClassName(parentElement, elementLocator.locatorString());
-            case TAG_NAME -> findElementByTagName(parentElement, elementLocator.locatorString());
-        };
+        return findElements(parentElement, elementLocator).stream().findFirst();
     }
 
     public List<WebElement> findElements(WebElement parentElement, ElementLocator elementLocator) {
-        return switch (elementLocator.locatorType()) {
-            case CSS -> findElementsByCssSelector(parentElement, elementLocator.locatorString());
-            case XPATH -> findElementsByXPath(parentElement, elementLocator.locatorString());
-            case CLASS_NAME -> findElementsByClassName(parentElement, elementLocator.locatorString());
-            case TAG_NAME -> findElementsByTagName(parentElement, elementLocator.locatorString());
-        };
+        return tryFindElements(parentElement, elementLocator.locatorType(), elementLocator.locatorString());
+    }
+
+    private List<WebElement> tryFindElements(WebElement parentElement, LocatorType locatorType, String locatorString) {
+        try {
+            return switch (locatorType) {
+                case CSS -> findElementsByCssSelector(parentElement, locatorString);
+                case XPATH -> findElementsByXPath(parentElement, locatorString);
+                case CLASS_NAME -> findElementsByClassName(parentElement, locatorString);
+                case TAG_NAME -> findElementsByTagName(parentElement, locatorString);
+                case ID -> findElementsById(parentElement, locatorString);
+            };
+        } catch (Exception e) {
+            log.debug("Could not find elements with {} elementLocator: {}", locatorType, locatorString, e);
+            return Collections.emptyList();
+        }
     }
 
     public void waitForElement(ElementLocator elementLocator) {
@@ -65,10 +83,9 @@ public class SeleniumHelper {
             case XPATH -> waitUntilElementLoadsByXPath(elementLocator.locatorString());
             case CLASS_NAME -> waitUntilElementLoadsByClassName(elementLocator.locatorString());
             case TAG_NAME -> waitUntilElementLoadsByTagName(elementLocator.locatorString());
+            case ID -> waitUntilElementLoadsById(elementLocator.locatorString());
         }
     }
-
-
 
     /**
      * Extract a value using the specified extraction type
@@ -120,6 +137,31 @@ public class SeleniumHelper {
 
     public Optional<WebElement> findElementByXPath(WebElement parentElement, String xpathSelector) {
         return findElementsByXPath(parentElement, xpathSelector).stream().findFirst();
+    }
+
+    /**
+     * Find elements by id
+     *
+     * @param parentElement The parent element to search within, or null to search from root
+     * @param id The id to search for
+     * @return List of found elements or empty list if none found
+     */
+    public List<WebElement> findElementsById(WebElement parentElement, String id) {
+        try {
+            log.debug("Looking up elements with id: {}", id);
+            if (parentElement != null) {
+                return parentElement.findElements(By.id(id));
+            } else {
+                return getDriver().findElements(By.id(id));
+            }
+        } catch (Exception e) {
+            log.debug("Could not find elements with id: {}", id, e);
+            return Collections.emptyList();
+        }
+    }
+
+    public Optional<WebElement> findElementById(WebElement parentElement, String id) {
+        return findElementsById(parentElement, id).stream().findFirst();
     }
 
     /**
@@ -338,19 +380,33 @@ public class SeleniumHelper {
     /**
      * Wait for an element to be present and return it
      *
-     * @param xpathSelector The CSS elementLocator to use
+     * @param xpathSelector The XPath elementLocator to use
      * @param waitDurationInSeconds Maximum time to wait in seconds
      */
     public void waitUntilElementLoadsByXPath(String xpathSelector, int waitDurationInSeconds) {
-
         WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(waitDurationInSeconds));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(xpathSelector)));
     }
 
     public void waitUntilElementLoadsByXPath(String xpathSelector) {
-
         WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(DEFAULT_WAIT_DURATION_IN_SECONDS));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(xpathSelector)));
+    }
+
+    /**
+     * Wait for an element to be present by ID
+     *
+     * @param id The ID elementLocator to use
+     * @param waitDurationInSeconds Maximum time to wait in seconds
+     */
+    public void waitUntilElementLoadsById(String id, int waitDurationInSeconds) {
+        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(waitDurationInSeconds));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.id(id)));
+    }
+
+    public void waitUntilElementLoadsById(String id) {
+        WebDriverWait wait = new WebDriverWait(getDriver(), Duration.ofSeconds(DEFAULT_WAIT_DURATION_IN_SECONDS));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.id(id)));
     }
 
     public void waitUntilElementLoadsByCssSelector(String cssSelector, int waitDurationInSeconds) {
