@@ -10,6 +10,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 @Entity
 @Table(name = "sentence_analyses")
 public class SentenceAnalysis {
@@ -17,14 +18,12 @@ public class SentenceAnalysis {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
     private String parseTree;
 
-    @Column(nullable = false)
     private String sentiment;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "nlp_result_id", nullable = false)
+    @JoinColumn(name = "nlp_result")
     private NLPResult nlpResult;
 
     @OneToMany(mappedBy = "sentenceAnalysis", cascade = CascadeType.ALL, orphanRemoval = true)

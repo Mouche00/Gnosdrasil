@@ -8,6 +8,7 @@ import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
 import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeCoreAnnotations;
 import edu.stanford.nlp.util.CoreMap;
+import lombok.extern.slf4j.Slf4j;
 import org.languagetool.JLanguageTool;
 import org.languagetool.language.AmericanEnglish;
 import org.languagetool.rules.RuleMatch;
@@ -23,6 +24,7 @@ import org.yc.gnosdrasil.gdpromptprocessingservice.services.NLPService;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class NLPServiceImpl implements NLPService {
 
@@ -75,6 +77,13 @@ public class NLPServiceImpl implements NLPService {
 
         // Calculate overall sentiment
         String overallSentiment = calculateOverallSentiment(sentences);
+
+        log.info("NLPResult: {}", NLPResult.builder()
+                .correctedText(correctedText)
+                .sentenceAnalyses(sentenceAnalyses)
+                .languageIntents(languageIntents)
+                .overallSentiment(overallSentiment)
+                .build());
 
         return NLPResult.builder()
                 .correctedText(correctedText)
@@ -135,8 +144,10 @@ public class NLPServiceImpl implements NLPService {
             List<CoreLabel> tokens = sentence.get(CoreAnnotations.TokensAnnotation.class);
             String sentenceText = sentence.toString().toLowerCase();
 
+            // Only look for languages that are explicitly mentioned in the sentence
             for (String lang : programmingLanguages) {
-                if (sentenceText.contains(lang)) {
+                // Check if the language is mentioned as a complete word
+                if (sentenceText.matches(".*\\b" + lang + "\\b.*")) {
                     LanguageIntent intent = new LanguageIntent();
                     intent.setLang(lang);
                     intent.setLevel(determineExperienceLevel(sentenceText, lang, tokens));

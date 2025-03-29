@@ -14,6 +14,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 @Entity
 @Table(name = "nlp_results")
 public class NLPResult {
@@ -21,21 +22,21 @@ public class NLPResult {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Original text cannot be empty")
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String originalText;
+//    @NotBlank(message = "Original text cannot be empty")
+//    @Column(nullable = false, columnDefinition = "TEXT")
+//    private String originalText;
 
-    @NotBlank(message = "Corrected text cannot be empty")
-    @Column(nullable = false, columnDefinition = "TEXT")
+//    @NotBlank(message = "Corrected text cannot be empty")
+//    @Column(nullable = false, columnDefinition = "TEXT")
     private String correctedText;
 
-    @NotBlank(message = "Overall sentiment cannot be empty")
-    @Column(nullable = false)
+//    @NotBlank(message = "Overall sentiment cannot be empty")
+//    @Column(nullable = false)
     private String overallSentiment;
 
-    @NotNull(message = "Creation timestamp cannot be null")
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+//    @NotNull(message = "Creation timestamp cannot be null")
+//    @Column(nullable = false)
+//    private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "nlpResult", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SentenceAnalysis> sentenceAnalyses = new ArrayList<>();

@@ -7,6 +7,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 @Entity
 @Table(name = "token_infos")
 public class TokenInfo {
@@ -14,19 +15,15 @@ public class TokenInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String word;
 
-    @Column(nullable = false)
     private String pos;
 
-    @Column(nullable = false)
     private String lemma;
 
-    @Column(nullable = false)
     private String ner;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sentence_analysis_id", nullable = false)
+    @JoinColumn(name = "sentence_analysis")
     private SentenceAnalysis sentenceAnalysis;
 } 
