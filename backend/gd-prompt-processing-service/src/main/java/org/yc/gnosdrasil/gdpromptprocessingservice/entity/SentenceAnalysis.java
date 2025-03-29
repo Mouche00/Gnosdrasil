@@ -10,7 +10,6 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
 @Entity
 @Table(name = "sentence_analyses")
 public class SentenceAnalysis {
@@ -18,6 +17,7 @@ public class SentenceAnalysis {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(columnDefinition = "TEXT")
     private String parseTree;
 
     private String sentiment;
@@ -28,4 +28,12 @@ public class SentenceAnalysis {
 
     @OneToMany(mappedBy = "sentenceAnalysis", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TokenInfo> tokens;
+
+    @PrePersist
+    protected void onCreate() {
+        // Set up bidirectional relationships
+        if (tokens != null) {
+            tokens.forEach(t -> t.setSentenceAnalysis(this));
+        }
+    }
 } 

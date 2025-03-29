@@ -17,5 +17,5 @@ spring:
 
 logging:
   level:
-    com.progresssoft: DEBUG
+    root: INFO
     org.hibernate.SQL: DEBUG

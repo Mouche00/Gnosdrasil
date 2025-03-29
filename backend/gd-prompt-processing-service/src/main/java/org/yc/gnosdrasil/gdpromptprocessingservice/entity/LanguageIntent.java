@@ -10,7 +10,6 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
 @Entity
 @Table(name = "language_intents")
 public class LanguageIntent {
@@ -21,6 +20,8 @@ public class LanguageIntent {
     private String lang;
 
     private String level;
+
+    private boolean isFocus;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "nlp_result")

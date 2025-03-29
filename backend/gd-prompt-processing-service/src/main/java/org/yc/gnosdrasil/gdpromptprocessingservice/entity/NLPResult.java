@@ -27,7 +27,7 @@ public class NLPResult {
 //    private String originalText;
 
 //    @NotBlank(message = "Corrected text cannot be empty")
-//    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String correctedText;
 
 //    @NotBlank(message = "Overall sentiment cannot be empty")
@@ -44,6 +44,14 @@ public class NLPResult {
     @OneToMany(mappedBy = "nlpResult", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LanguageIntent> languageIntents = new ArrayList<>();
 
-    @OneToMany(mappedBy = "nlpResult", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<LearningFocus> learningFocus = new ArrayList<>();
+    @PrePersist
+    protected void onCreate() {
+        // Set up bidirectional relationships
+        if (sentenceAnalyses != null) {
+            sentenceAnalyses.forEach(sa -> sa.setNlpResult(this));
+        }
+        if (languageIntents != null) {
+            languageIntents.forEach(li -> li.setNlpResult(this));
+        }
+    }
 } 

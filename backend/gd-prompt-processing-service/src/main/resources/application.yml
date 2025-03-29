@@ -21,9 +21,127 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+nlp:
+  programming-languages:
+    - javascript
+    - java
+    - python
+    - c++
+    - c#
+    - ruby
+    - php
+    - swift
+    - kotlin
+    - go
+    - rust
+    - scala
+    - r
+    - matlab
+    - typescript
+    - dart
+    - perl
+    - haskell
+    - lua
+    - shell
+    - assembly
+    - c
+    - objective-c
+    - sql
+    - html
+    - css
+    - xml
+    - yaml
+    - json
+    - markdown
+  learning-keywords:
+    - learn
+    - learning
+    - study
+    - studying
+    - want to learn
+    - trying to learn
+    - new to
+    - starting
+    - beginning
+    - beginner
+    - novice
+    - master
+    - understand
+    - get better at
+    - improve
+    - improving
+    - practice
+    - practicing
+  beginner-indicators:
+    - beginner
+    - novice
+    - new to
+    - just started
+    - starting
+    - beginning
+  intermediate-indicators:
+    - intermediate
+    - proficient
+    - familiar with
+    - comfortable with
+  advanced-indicators:
+    - advanced
+    - expert
+    - master
+    - professional
+  negative-indicators:
+    - no
+    - don't
+    - dont
+    - haven't
+    - havent
+    - never
+    - new to
+    - starting
+    - beginning
+    - want to learn
+    - trying to learn
+    - learning
+    - just started
+    - beginner
+    - novice
+    - basic
+    - simple
+    - struggling
+    - difficult
+    - hard
+    - challenging
+    - confused
+    - confusing
+    - not sure
+    - unsure
+  positive-indicators:
+    - experienced
+    - familiar
+    - know
+    - understand
+    - worked with
+    - used
+    - developed
+    - built
+    - created
+    - implemented
+    - designed
+    - comfortable
+    - confident
+    - proficient
+    - skilled
+    - expert
+    - master
+    - professional
+    - advanced
+    - senior
+    - lead
+    - architect
+
 logging:
   level:
-    com.progresssoft: INFO
+    root: INFO
 
 server:
   port: 8080
