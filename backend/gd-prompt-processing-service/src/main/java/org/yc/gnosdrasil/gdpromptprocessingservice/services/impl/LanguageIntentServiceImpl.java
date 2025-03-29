@@ -2,6 +2,7 @@ package org.yc.gnosdrasil.gdpromptprocessingservice.services.impl;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
+import edu.stanford.nlp.pipeline.CoreSentence;
 import edu.stanford.nlp.util.CoreMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,64 +23,64 @@ public class LanguageIntentServiceImpl implements LanguageIntentService {
     private final ExperienceLevelService experienceLevelService;
 
     @Override
-    public List<LanguageIntent> extractLanguageIntents(List<CoreMap> sentences) {
-        // Use a Set to track unique language-level combinations
+    public List<LanguageIntent> extractLanguageIntents(List<CoreSentence> sentences) {
         Set<String> processedCombinations = new HashSet<>();
         List<LanguageIntent> intents = new ArrayList<>();
         Map<String, String> pronounMap = identifyPronounReferents(sentences);
-        log.info("Identified pronoun referents: {}", pronounMap);
 
-        for (CoreMap sentence : sentences) {
+        for (CoreSentence sentence : sentences) {
             String sentenceText = sentence.toString().toLowerCase();
-            List<CoreLabel> tokens = sentence.get(CoreAnnotations.TokensAnnotation.class);
-
-            // Split sentence into clauses (roughly by conjunctions)
+            List<CoreLabel> tokens = sentence.tokens();
             List<String> clauses = splitIntoClauses(sentenceText);
-            log.info("Split sentence into clauses: {}", clauses);
+            log.info("Sentence splitting result: {}", clauses);
 
-            // Look for programming languages in this sentence
-            for (String lang : nlpProperties.getProgrammingLanguages()) {
-                if (sentenceText.matches(".*\\b" + lang + "\\b.*")) {
-                    String level = experienceLevelService.determineExperienceLevel(sentenceText, lang, tokens);
-                    String combination = lang + ":" + level;
-                    
-                    if (!processedCombinations.contains(combination)) {
-                        // Find which clause contains this language
-                        String containingClause = findContainingClause(clauses, lang);
-                        boolean isFocus = isLanguageInLearningClause(containingClause, lang);
-                        log.info("lang {} has focus value: {}", lang, isFocus);
-                        LanguageIntent intent = createLanguageIntent(lang, sentenceText, tokens, isFocus);
-                        intents.add(intent);
-                        processedCombinations.add(combination);
-                    }
-                }
-            }
+            // Process direct language mentions
+            processLanguageMentions(sentenceText, tokens, clauses, processedCombinations, intents);
 
-            // Check for pronouns that might refer to programming languages
-            for (Map.Entry<String, String> entry : pronounMap.entrySet()) {
-                if (sentenceText.contains(entry.getKey())) {
-                    String lang = entry.getValue();
-                    String level = experienceLevelService.determineExperienceLevel(sentenceText, lang, tokens);
-                    String combination = lang + ":" + level;
-                    
-                    if (!processedCombinations.contains(combination)) {
-                        // Find which clause contains this pronoun
-                        String containingClause = findContainingClause(clauses, entry.getKey());
-                        boolean isFocus = isPronounInLearningClause(containingClause, entry.getKey());
-                        log.info("lang {} has focus value: {}", lang, isFocus);
-                        LanguageIntent intent = createLanguageIntent(lang, sentenceText, tokens, isFocus);
-                        intents.add(intent);
-                        processedCombinations.add(combination);
-                    }
-                }
-            }
+            // Process pronoun references
+            processPronounReferences(sentenceText, tokens, clauses, pronounMap, processedCombinations, intents);
         }
 
         return intents;
     }
 
+    private void processLanguageMentions(String sentenceText, List<CoreLabel> tokens, 
+            List<String> clauses, Set<String> processedCombinations, List<LanguageIntent> intents) {
+        nlpProperties.getProgrammingLanguages().stream()
+                .filter(lang -> sentenceText.matches(".*\\b" + lang + "\\b.*"))
+                .forEach(lang -> {
+                    String level = experienceLevelService.determineExperienceLevel(sentenceText, lang, tokens);
+                    String combination = lang + ":" + level;
+                    
+                    if (!processedCombinations.contains(combination)) {
+                        String containingClause = findContainingClause(clauses, lang);
+                        boolean isFocus = isInLearningClause(containingClause, lang);
+                        intents.add(createLanguageIntent(lang, sentenceText, tokens, isFocus));
+                        processedCombinations.add(combination);
+                    }
+                });
+    }
+
+    private void processPronounReferences(String sentenceText, List<CoreLabel> tokens,
+            List<String> clauses, Map<String, String> pronounMap, Set<String> processedCombinations,
+            List<LanguageIntent> intents) {
+        pronounMap.entrySet().stream()
+                .filter(entry -> sentenceText.contains(entry.getKey()))
+                .forEach(entry -> {
+                    String lang = entry.getValue();
+                    String level = experienceLevelService.determineExperienceLevel(sentenceText, lang, tokens);
+                    String combination = lang + ":" + level;
+                    
+                    if (!processedCombinations.contains(combination)) {
+                        String containingClause = findContainingClause(clauses, entry.getKey());
+                        boolean isFocus = isInLearningClause(containingClause, entry.getKey());
+                        intents.add(createLanguageIntent(lang, sentenceText, tokens, isFocus));
+                        processedCombinations.add(combination);
+                    }
+                });
+    }
+
     private List<String> splitIntoClauses(String sentence) {
-        // Split by common conjunctions and punctuation
         return Arrays.asList(sentence.split("(?<=[,;]|\\s+(and|but|or|yet|so)\\s+)|(?=[,;]|\\s+(and|but|or|yet|so)\\s+)"));
     }
 
@@ -90,61 +91,19 @@ public class LanguageIntentServiceImpl implements LanguageIntentService {
                 .orElse("");
     }
 
-    private boolean isLanguageInLearningClause(String clause, String language) {
+    private boolean isInLearningClause(String clause, String target) {
         if (clause.isEmpty()) return false;
-        log.info("Checking if {} is in learning clause {}", language, clause);
-
-        // Check for experience-related keywords first
-//        if (hasExperienceKeywords(clause)) {
-//            log.info("{} has experience keywords", clause);
-//            return false;
-//        }
-
-        // Check for learning keywords in the clause
         return nlpProperties.getLearningKeywords().stream()
-                .anyMatch(keyword -> 
-                    clause.contains(keyword) &&
-                    // Ensure the language is mentioned in the same clause
-                    clause.contains(language)
-                );
+                .anyMatch(keyword -> clause.contains(keyword) && clause.contains(target));
     }
 
-    private boolean isPronounInLearningClause(String clause, String pronoun) {
-        if (clause.isEmpty()) return false;
-        log.info("Checking if {} is in learning clause {}", pronoun, clause);
-
-        // Check for experience-related keywords first
-//        if (hasExperienceKeywords(clause)) {
-//            log.info("{} has experience keywords", clause);
-//            return false;
-//        }
-
-        // Check for learning keywords in the clause
-        return nlpProperties.getLearningKeywords().stream()
-                .anyMatch(keyword -> 
-                    clause.contains(keyword) &&
-                    // Ensure the pronoun is mentioned in the same clause
-                    clause.contains(pronoun)
-                );
-    }
-
-//    private boolean hasExperienceKeywords(String text) {
-//        return Arrays.asList(
-//                "experience", "experienced", "have experience", "worked with",
-//                "used", "developed", "built", "created", "implemented",
-//                "designed", "familiar", "know", "understand"
-//        ).stream().anyMatch(text::contains);
-//    }
-
-    private Map<String, String> identifyPronounReferents(List<CoreMap> sentences) {
+    private Map<String, String> identifyPronounReferents(List<CoreSentence> sentences) {
         Map<String, String> pronounMap = new HashMap<>();
         String lastMentionedLanguage = null;
 
-        for (CoreMap sentence : sentences) {
-            List<CoreLabel> tokens = sentence.get(CoreAnnotations.TokensAnnotation.class);
-            
-            for (CoreLabel token : tokens) {
-                if (token.tag().startsWith("PRP")) { // Pronoun
+        for (CoreSentence sentence : sentences) {
+            for (CoreLabel token : sentence.tokens()) {
+                if (token.tag().startsWith("PRP")) {
                     String pronoun = token.word().toLowerCase();
                     if (lastMentionedLanguage != null) {
                         pronounMap.put(pronoun, lastMentionedLanguage);

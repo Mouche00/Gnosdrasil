@@ -2,7 +2,8 @@ package org.yc.gnosdrasil.gdpromptprocessingservice.services.impl;
 
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
-import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.CoreDocument;
+import edu.stanford.nlp.pipeline.CoreSentence;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
 import edu.stanford.nlp.trees.Tree;
@@ -34,8 +35,7 @@ import java.util.stream.Collectors;
 public class NLPServiceImpl implements NLPService {
 
     private final JLanguageTool languageTool = new JLanguageTool(new AmericanEnglish());
-
-    private final StanfordCoreNLP stanfordCoreNLP;
+    private final StanfordCoreNLP pipeline;
     private final NLPResultRepository nlpResultRepository;
     private final LanguageIntentService languageIntentService;
     private final NLPMapper nlpMapper;
@@ -43,38 +43,23 @@ public class NLPServiceImpl implements NLPService {
     @Transactional
     public NLPResultDTO processText(PromptRequestDTO promptRequestDTO) {
         String text = promptRequestDTO.prompt();
-
-        // Save to database
         NLPResult result = nlpResultRepository.save(processTextInternal(text));
-
         return nlpMapper.toDto(result);
     }
 
     private NLPResult processTextInternal(String text) {
-        // Correct spelling
         String correctedText = correctSpelling(text);
+        CoreDocument document = new CoreDocument(correctedText);
+        pipeline.annotate(document);
 
-        // Process with Stanford CoreNLP
-        Annotation document = new Annotation(correctedText);
-        stanfordCoreNLP.annotate(document);
-
-        // Extract sentences
-        List<CoreMap> sentences = document.get(CoreAnnotations.SentencesAnnotation.class);
-
-        // Process each sentence
+        List<CoreSentence> sentences = document.sentences();
         List<SentenceAnalysis> sentenceAnalyses = sentences.stream()
                 .map(this::analyzeSentence)
                 .collect(Collectors.toList());
 
-        log.info("Extracting language levels");
-
-        // Extract programming languages and experience levels
         List<LanguageIntent> languageIntents = new ArrayList<>(languageIntentService.extractLanguageIntents(sentences));
-
-        // Calculate overall sentiment
         String overallSentiment = calculateOverallSentiment(sentences);
 
-        // Build and set up relationships
         NLPResult result = NLPResult.builder()
                 .correctedText(correctedText)
                 .sentenceAnalyses(sentenceAnalyses)
@@ -82,11 +67,9 @@ public class NLPServiceImpl implements NLPService {
                 .overallSentiment(overallSentiment)
                 .build();
 
-        // Set up bidirectional relationships
         sentenceAnalyses.forEach(sa -> sa.setNlpResult(result));
         languageIntents.forEach(li -> li.setNlpResult(result));
 
-        log.info("NLPResult: {}", result);
         return result;
     }
 
@@ -95,7 +78,7 @@ public class NLPServiceImpl implements NLPService {
             List<RuleMatch> matches = languageTool.check(text);
             StringBuilder correctedText = new StringBuilder(text);
             for (RuleMatch match : matches) {
-                if (match.getSuggestedReplacements().size() > 0) {
+                if (!match.getSuggestedReplacements().isEmpty()) {
                     correctedText.replace(
                             match.getFromPos(),
                             match.getToPos(),
@@ -105,46 +88,30 @@ public class NLPServiceImpl implements NLPService {
             }
             return correctedText.toString();
         } catch (Exception e) {
+            log.error("Error correcting spelling", e);
             return text;
         }
     }
 
-    private SentenceAnalysis analyzeSentence(CoreMap sentence) {
-        // Get tokens and their POS tags
-        List<CoreLabel> tokens = sentence.get(CoreAnnotations.TokensAnnotation.class);
-        List<TokenInfo> tokenInfos = tokens.stream()
-                .map(token -> TokenInfo.builder()
-                        .word(token.word())
-                        .pos(token.tag())
-                        .lemma(token.lemma())
-                        .ner(token.ner())
-                        .build())
-                .collect(Collectors.toList());
-
-        // Get parse tree
-        Tree tree = sentence.get(TreeCoreAnnotations.TreeAnnotation.class);
-
-        // Get sentiment
-        String sentiment = sentence.get(SentimentCoreAnnotations.SentimentClass.class);
-
+    private SentenceAnalysis analyzeSentence(CoreSentence sentence) {
+        Tree tree = sentence.sentimentTree();
+        String sentiment = sentence.sentiment();
+        
         return SentenceAnalysis.builder()
-                .tokens(tokenInfos)
+//                .sentence(sentence.toString())
                 .parseTree(tree.toString())
                 .sentiment(sentiment)
                 .build();
     }
 
-    private String calculateOverallSentiment(List<CoreMap> sentences) {
-        return sentences.stream()
-                .map(sentence -> sentence.get(SentimentCoreAnnotations.SentimentClass.class))
-                .collect(Collectors.groupingBy(
-                        sentiment -> sentiment,
-                        Collectors.counting()
-                ))
-                .entrySet()
-                .stream()
+    private String calculateOverallSentiment(List<CoreSentence> sentences) {
+        Map<String, Long> sentimentCounts = sentences.stream()
+                .map(CoreSentence::sentiment)
+                .collect(Collectors.groupingBy(s -> s, Collectors.counting()));
+
+        return sentimentCounts.entrySet().stream()
                 .max((e1, e2) -> e1.getValue().compareTo(e2.getValue()))
                 .map(Map.Entry::getKey)
-                .orElse("Neutral");
+                .orElse("neutral");
     }
 } 

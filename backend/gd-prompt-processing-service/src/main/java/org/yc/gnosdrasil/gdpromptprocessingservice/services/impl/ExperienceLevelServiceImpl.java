@@ -21,15 +21,9 @@ public class ExperienceLevelServiceImpl implements ExperienceLevelService {
                 sentence.substring(langIndex + language.length()) : "";
 
         // Check for explicit experience levels
-        if (containsAny(sentence, nlpProperties.getBeginnerIndicators())) {
-            return "beginner";
-        }
-        if (containsAny(sentence, nlpProperties.getIntermediateIndicators())) {
-            return "intermediate";
-        }
-        if (containsAny(sentence, nlpProperties.getAdvancedIndicators())) {
-            return "advanced";
-        }
+        if (containsAny(sentence, nlpProperties.getBeginnerIndicators())) return "beginner";
+        if (containsAny(sentence, nlpProperties.getIntermediateIndicators())) return "intermediate";
+        if (containsAny(sentence, nlpProperties.getAdvancedIndicators())) return "advanced";
 
         // Check for negative experience indicators
         if (containsAny(beforeLang, nlpProperties.getNegativeIndicators()) || 
@@ -43,15 +37,12 @@ public class ExperienceLevelServiceImpl implements ExperienceLevelService {
             return "intermediate";
         }
 
-        // Default to beginner if no clear indication
         return "beginner";
     }
 
     private boolean containsAny(String text, Iterable<String> indicators) {
         for (String indicator : indicators) {
-            if (text.contains(indicator)) {
-                return true;
-            }
+            if (text.contains(indicator)) return true;
         }
         return false;
     }
