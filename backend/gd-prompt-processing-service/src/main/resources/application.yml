@@ -99,6 +99,7 @@ nlp:
     - new to
     - starting
     - beginning
+    - need to learn
     - want to learn
     - trying to learn
     - learning
@@ -117,6 +118,7 @@ nlp:
     - unsure
   positive-indicators:
     - experienced
+    - experience
     - familiar
     - know
     - understand

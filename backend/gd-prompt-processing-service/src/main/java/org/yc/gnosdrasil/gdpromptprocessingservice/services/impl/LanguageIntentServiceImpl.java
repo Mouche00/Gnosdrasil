@@ -15,6 +15,9 @@ import org.yc.gnosdrasil.gdpromptprocessingservice.services.LanguageIntentServic
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.yc.gnosdrasil.gdpromptprocessingservice.utils.helpers.StringHelper.findContainingClause;
+import static org.yc.gnosdrasil.gdpromptprocessingservice.utils.helpers.StringHelper.splitIntoClauses;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -78,17 +81,6 @@ public class LanguageIntentServiceImpl implements LanguageIntentService {
                         processedCombinations.add(combination);
                     }
                 });
-    }
-
-    private List<String> splitIntoClauses(String sentence) {
-        return Arrays.asList(sentence.split("(?<=[,;]|\\s+(and|but|or|yet|so)\\s+)|(?=[,;]|\\s+(and|but|or|yet|so)\\s+)"));
-    }
-
-    private String findContainingClause(List<String> clauses, String target) {
-        return clauses.stream()
-                .filter(clause -> clause.matches(".*\\b" + target + "\\b.*"))
-                .findFirst()
-                .orElse("");
     }
 
     private boolean isInLearningClause(String clause, String target) {

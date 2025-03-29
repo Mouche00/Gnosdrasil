@@ -16,6 +16,7 @@ import org.languagetool.language.AmericanEnglish;
 import org.languagetool.rules.RuleMatch;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yc.gnosdrasil.gdpromptprocessingservice.config.NLPProperties;
 import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.NLPResultDTO;
 import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.PromptRequestDTO;
 import org.yc.gnosdrasil.gdpromptprocessingservice.entity.*;
@@ -24,9 +25,7 @@ import org.yc.gnosdrasil.gdpromptprocessingservice.services.LanguageIntentServic
 import org.yc.gnosdrasil.gdpromptprocessingservice.services.NLPService;
 import org.yc.gnosdrasil.gdpromptprocessingservice.utils.mapper.NLPMapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -39,6 +38,14 @@ public class NLPServiceImpl implements NLPService {
     private final NLPResultRepository nlpResultRepository;
     private final LanguageIntentService languageIntentService;
     private final NLPMapper nlpMapper;
+    private final NLPProperties nlpProperties;
+
+    private static final int MAX_LEVENSHTEIN_DISTANCE = 2;
+    private static final Set<String> PROGRAMMING_CONTEXT_WORDS = Set.of(
+        "learn", "learning", "programming", "code", "coding", "develop", "development",
+        "experience", "experienced", "expert", "expertise", "know", "knowledge",
+        "new", "beginner", "intermediate", "advanced", "master", "mastery"
+    );
 
     @Transactional
     public NLPResultDTO processText(PromptRequestDTO promptRequestDTO) {
@@ -75,8 +82,13 @@ public class NLPServiceImpl implements NLPService {
 
     private String correctSpelling(String text) {
         try {
-            List<RuleMatch> matches = languageTool.check(text);
-            StringBuilder correctedText = new StringBuilder(text);
+            // First, check for programming language corrections
+            String textWithLangCorrections = correctProgrammingLanguages(text);
+            
+            // Then proceed with regular spelling correction
+            List<RuleMatch> matches = languageTool.check(textWithLangCorrections);
+            StringBuilder correctedText = new StringBuilder(textWithLangCorrections);
+            
             for (RuleMatch match : matches) {
                 if (!match.getSuggestedReplacements().isEmpty()) {
                     correctedText.replace(
@@ -93,12 +105,126 @@ public class NLPServiceImpl implements NLPService {
         }
     }
 
+    private String correctProgrammingLanguages(String text) {
+        CoreDocument document = new CoreDocument(text);
+        pipeline.annotate(document);
+        
+        StringBuilder correctedText = new StringBuilder(text);
+        List<String> programmingLanguages = new ArrayList<>(nlpProperties.getProgrammingLanguages());
+        
+        for (CoreSentence sentence : document.sentences()) {
+            List<CoreLabel> tokens = sentence.tokens();
+            for (int i = 0; i < tokens.size(); i++) {
+                CoreLabel token = tokens.get(i);
+                String word = token.word();
+                String pos = token.tag();
+                
+                // Only consider words that are nouns or unknown parts of speech
+                if (!pos.startsWith("NN") && !pos.equals("UNKNOWN")) {
+                    continue;
+                }
+                
+                // Check if the word is in a programming context
+                if (!isInProgrammingContext(sentence, i)) {
+                    continue;
+                }
+                
+                String correctedWord = findClosestProgrammingLanguage(word, programmingLanguages);
+                
+                if (!word.equals(correctedWord)) {
+                    int startPos = token.beginPosition();
+                    correctedText.replace(startPos, startPos + word.length(), correctedWord);
+                }
+            }
+        }
+        
+        return correctedText.toString();
+    }
+
+    private boolean isInProgrammingContext(CoreSentence sentence, int tokenIndex) {
+        List<CoreLabel> tokens = sentence.tokens();
+        String sentenceText = sentence.text().toLowerCase();
+        
+        // Check if any programming context words are in the sentence
+        boolean hasContextWord = PROGRAMMING_CONTEXT_WORDS.stream()
+                .anyMatch(word -> sentenceText.contains(word));
+        
+        if (!hasContextWord) {
+            return false;
+        }
+        
+        // Check if the word is near a programming context word
+        int windowSize = 5; // Look at 5 words before and after
+        int start = Math.max(0, tokenIndex - windowSize);
+        int end = Math.min(tokens.size(), tokenIndex + windowSize + 1);
+        
+        for (int i = start; i < end; i++) {
+            String word = tokens.get(i).word().toLowerCase();
+            if (PROGRAMMING_CONTEXT_WORDS.contains(word)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    private String findClosestProgrammingLanguage(String word, List<String> programmingLanguages) {
+        String closestMatch = word;
+        int minDistance = Integer.MAX_VALUE;
+        
+        // Only consider words that are at least 3 characters long
+        if (word.length() < 3) {
+            return word;
+        }
+        
+        for (String lang : programmingLanguages) {
+            // Skip if the word is too different in length from the programming language
+            if (Math.abs(word.length() - lang.length()) > 3) {
+                continue;
+            }
+            
+            int distance = levenshteinDistance(word.toLowerCase(), lang.toLowerCase());
+            if (distance <= MAX_LEVENSHTEIN_DISTANCE && distance < minDistance) {
+                minDistance = distance;
+                closestMatch = lang;
+            }
+        }
+        
+        return closestMatch;
+    }
+
+    private int levenshteinDistance(String s1, String s2) {
+        int[][] distance = new int[s1.length() + 1][s2.length() + 1];
+        
+        for (int i = 0; i <= s1.length(); i++) {
+            distance[i][0] = i;
+        }
+        
+        for (int j = 0; j <= s2.length(); j++) {
+            distance[0][j] = j;
+        }
+        
+        for (int i = 0; i < s1.length(); i++) {
+            for (int j = 0; j < s2.length(); j++) {
+                if (s1.charAt(i) == s2.charAt(j)) {
+                    distance[i + 1][j + 1] = distance[i][j];
+                } else {
+                    distance[i + 1][j + 1] = Math.min(
+                            Math.min(distance[i][j + 1] + 1, distance[i + 1][j] + 1),
+                            distance[i][j] + 1
+                    );
+                }
+            }
+        }
+        
+        return distance[s1.length()][s2.length()];
+    }
+
     private SentenceAnalysis analyzeSentence(CoreSentence sentence) {
         Tree tree = sentence.sentimentTree();
         String sentiment = sentence.sentiment();
         
         return SentenceAnalysis.builder()
-//                .sentence(sentence.toString())
                 .parseTree(tree.toString())
                 .sentiment(sentiment)
                 .build();
