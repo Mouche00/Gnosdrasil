@@ -43,4 +43,7 @@ public class NLPResult {
 
     @OneToMany(mappedBy = "nlpResult", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LanguageIntent> languageIntents = new ArrayList<>();
+
+    @OneToMany(mappedBy = "nlpResult", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LearningFocus> learningFocus = new ArrayList<>();
 } 
