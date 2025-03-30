@@ -2,7 +2,9 @@ spring:
   application:
     name: gd-board-scraper-service
   config:
-    import: optional:file:.env[.properties]
+    import:
+      - optional:file:./${spring.application.name}/.env[.properties]
+      - optional:file:./.env[.properties]
   data:
     mongodb:
       host: ${MONGODB_HOST:localhost}
