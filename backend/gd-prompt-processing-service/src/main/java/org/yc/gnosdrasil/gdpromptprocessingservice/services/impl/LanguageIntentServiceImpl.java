@@ -41,6 +41,8 @@ public class LanguageIntentServiceImpl implements LanguageIntentService {
             processPronounReferences(sentenceText, tokens, clauses, pronounMap, processedCombinations, intents);
         }
 
+        log.info("Language intents extracted: {}", intents.stream().filter(LanguageIntent::isFocus).count());
+
         return intents;
     }
 
@@ -54,7 +56,10 @@ public class LanguageIntentServiceImpl implements LanguageIntentService {
                     
                     if (!processedCombinations.contains(combination)) {
                         String containingClause = findContainingClause(clauses, lang);
-                        boolean isFocus = isInLearningClause(containingClause, lang);
+                        // Check both the containing clause and the next clause for learning context
+                        boolean isFocus = isInLearningClause(containingClause, lang) || 
+                                        (clauses.indexOf(containingClause) < clauses.size() - 1 && 
+                                         isInLearningClause(clauses.get(clauses.indexOf(containingClause) + 1), lang));
                         intents.add(createLanguageIntent(lang, sentenceText, tokens, isFocus));
                         processedCombinations.add(combination);
                     }
@@ -73,7 +78,10 @@ public class LanguageIntentServiceImpl implements LanguageIntentService {
                     
                     if (!processedCombinations.contains(combination)) {
                         String containingClause = findContainingClause(clauses, entry.getKey());
-                        boolean isFocus = isInLearningClause(containingClause, entry.getKey());
+                        // Check both the containing clause and the previous clause for learning context
+                        boolean isFocus = isInLearningClause(containingClause, entry.getKey()) || 
+                                        (clauses.indexOf(containingClause) > 0 && 
+                                         isInLearningClause(clauses.get(clauses.indexOf(containingClause) - 1), lang));
                         intents.add(createLanguageIntent(lang, sentenceText, tokens, isFocus));
                         processedCombinations.add(combination);
                     }
@@ -82,8 +90,23 @@ public class LanguageIntentServiceImpl implements LanguageIntentService {
 
     private boolean isInLearningClause(String clause, String target) {
         if (clause.isEmpty()) return false;
-        return nlpProperties.getLearningKeywords().stream()
-                .anyMatch(keyword -> clause.contains(keyword) && clause.contains(target));
+        log.info("Checking if {} is in learning clause {}", target, clause);
+        
+        // Check if the clause contains learning keywords and either the target or a pronoun
+        boolean hasLearningKeyword = nlpProperties.getLearningKeywords().stream()
+                .anyMatch(keyword -> clause.contains(keyword));
+                
+        if (!hasLearningKeyword) return false;
+        
+        // Check for direct language mention
+        if (clause.contains(target)) return true;
+        
+        // Check for pronouns that might refer to the language
+        List<String> pronouns = Arrays.asList("it", "this", "that", "these", "those");
+        boolean hasPronoun = pronouns.stream()
+                .anyMatch(pronoun -> clause.contains(pronoun));
+                
+        return hasPronoun;
     }
 
     private Map<String, String> identifyPronounReferents(List<CoreSentence> sentences) {

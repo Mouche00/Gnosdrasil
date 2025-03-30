@@ -41,13 +41,13 @@ public class NLPResult {
     private List<LanguageIntent> languageIntents = new ArrayList<>();
 
 //    @PrePersist
-    protected void onCreate() {
-        // Set up bidirectional relationships
-        if (sentenceAnalyses != null) {
-            sentenceAnalyses.forEach(sa -> sa.setNlpResult(this));
-        }
-        if (languageIntents != null) {
-            languageIntents.forEach(li -> li.setNlpResult(this));
-        }
-    }
+//    protected void onCreate() {
+//        // Set up bidirectional relationships
+//        if (sentenceAnalyses != null) {
+//            sentenceAnalyses.forEach(sa -> sa.setNlpResult(this));
+//        }
+//        if (languageIntents != null) {
+//            languageIntents.forEach(li -> li.setNlpResult(this));
+//        }
+//    }
 } 

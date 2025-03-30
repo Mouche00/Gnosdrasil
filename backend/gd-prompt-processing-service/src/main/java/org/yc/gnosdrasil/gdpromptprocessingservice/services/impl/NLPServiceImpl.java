@@ -21,10 +21,8 @@ import org.yc.gnosdrasil.gdpromptprocessingservice.services.LanguageIntentServic
 import org.yc.gnosdrasil.gdpromptprocessingservice.services.NLPService;
 import org.yc.gnosdrasil.gdpromptprocessingservice.utils.mapper.NLPMapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -34,7 +32,6 @@ public class NLPServiceImpl implements NLPService {
 
     private final JLanguageTool languageTool = new JLanguageTool(new AmericanEnglish());
     private final StanfordCoreNLP pipeline;
-//    private final NLPResultRepository nlpResultRepository;
     private final LanguageIntentService languageIntentService;
     private final NLPMapper nlpMapper;
     private final NLPProperties nlpProperties;
@@ -46,55 +43,88 @@ public class NLPServiceImpl implements NLPService {
         "new", "beginner", "intermediate", "advanced", "master", "mastery"
     );
 
-//    @Transactional
-    public NLPResultDTO processText(PromptRequestDTO promptRequestDTO) {
+    // Cache for processed results
+    private final Map<String, NLPResult> resultCache = new ConcurrentHashMap<>();
+
+    public NLPResult processText(PromptRequestDTO promptRequestDTO) {
         String text = promptRequestDTO.prompt();
-//        NLPResult result = nlpResultRepository.save(processTextInternal(text));
-//        NLPResult result = nlpResultRepository.save(processTextInternal(text));
-        return nlpMapper.toDto(processTextInternal(text));
+        
+        // Check cache first
+        return resultCache.computeIfAbsent(text, k -> {
+            try {
+                return processTextInternal(text);
+            } catch (Exception e) {
+                log.error("Error processing text: {}", text, e);
+                throw new RuntimeException("Failed to process text", e);
+            }
+        });
     }
 
     private NLPResult processTextInternal(String text) {
-        String correctedText = correctSpelling(text);
-        CoreDocument document = new CoreDocument(correctedText);
+        // Pre-processing
+        String preprocessedText = preprocessText(text);
+        
+        // Core NLP processing
+        CoreDocument document = new CoreDocument(preprocessedText);
         pipeline.annotate(document);
 
+        // Extract sentences and analyze
         List<CoreSentence> sentences = document.sentences();
-        List<SentenceAnalysis> sentenceAnalyses = sentences.stream()
+        List<SentenceAnalysis> sentenceAnalyses = sentences.parallelStream()
                 .map(this::analyzeSentence)
                 .collect(Collectors.toList());
 
-        List<LanguageIntent> languageIntents = new ArrayList<>(languageIntentService.extractLanguageIntents(sentences));
-        String overallSentiment = calculateOverallSentiment(sentences);
+        // Extract language intents with context awareness
+        List<LanguageIntent> languageIntents = new ArrayList<>(
+            languageIntentService.extractLanguageIntents(sentences)
+        );
 
-        NLPResult result = NLPResult.builder()
-                .correctedText(correctedText)
+        return NLPResult.builder()
+                .correctedText(preprocessedText)
                 .sentenceAnalyses(sentenceAnalyses)
                 .languageIntents(languageIntents)
-                .overallSentiment(overallSentiment)
                 .build();
+    }
 
-        sentenceAnalyses.forEach(sa -> sa.setNlpResult(result));
-        languageIntents.forEach(li -> li.setNlpResult(result));
+    private String preprocessText(String text) {
+        // Apply text normalization
+        String normalizedText = normalizeText(text);
+        
+        // Correct programming languages with context awareness
+        String correctedText = correctProgrammingLanguages(normalizedText);
+        
+        // Apply spelling correction with technical term awareness
+        return correctSpelling(correctedText);
+    }
 
-        return result;
+    private String normalizeText(String text) {
+        return text.replaceAll("\\s+", " ")
+                  .trim()
+                  .toLowerCase();
     }
 
     private String correctSpelling(String text) {
         try {
-            // First, check for programming language corrections
-            String textWithLangCorrections = correctProgrammingLanguages(text);
+            List<RuleMatch> matches = languageTool.check(text);
+            StringBuilder correctedText = new StringBuilder(text);
             
-            // Then proceed with regular spelling correction
-            List<RuleMatch> matches = languageTool.check(textWithLangCorrections);
-            StringBuilder correctedText = new StringBuilder(textWithLangCorrections);
+            // Sort matches by position to avoid overlapping corrections
+            matches.sort(Comparator.comparingInt(RuleMatch::getFromPos).reversed());
             
             for (RuleMatch match : matches) {
                 if (!match.getSuggestedReplacements().isEmpty()) {
+                    String replacement = match.getSuggestedReplacements().get(0);
+                    
+                    // Skip correction if it's a technical term
+                    if (nlpProperties.isEnableTechnicalTermDetection() && 
+                        isTechnicalTerm(text.substring(match.getFromPos(), match.getToPos()))) {
+                        continue;
+                    }
+                    
                     correctedText.replace(
                             match.getFromPos(),
                             match.getToPos(),
-                            match.getSuggestedReplacements().get(0)
+                            replacement
                     );
                 }
             }
@@ -103,6 +133,12 @@ public class NLPServiceImpl implements NLPService {
             log.error("Error correcting spelling", e);
             return text;
         }
+    }
+
+    private boolean isTechnicalTerm(String term) {
+        return nlpProperties.getTechnicalTerms().contains(term.toLowerCase()) ||
+               nlpProperties.getFrameworkKeywords().contains(term.toLowerCase()) ||
+               nlpProperties.getToolKeywords().contains(term.toLowerCase());
     }
 
     private String correctProgrammingLanguages(String text) {
@@ -119,12 +155,10 @@ public class NLPServiceImpl implements NLPService {
                 String word = token.word();
                 String pos = token.tag();
                 
-                // Only consider words that are nouns or unknown parts of speech
                 if (!pos.startsWith("NN") && !pos.equals("UNKNOWN")) {
                     continue;
                 }
                 
-                // Check if the word is in a programming context
                 if (!isInProgrammingContext(sentence, i)) {
                     continue;
                 }
@@ -142,10 +176,14 @@ public class NLPServiceImpl implements NLPService {
     }
 
     private boolean isInProgrammingContext(CoreSentence sentence, int tokenIndex) {
+        if (!nlpProperties.isEnableContextAwareness()) {
+            return true;
+        }
+
         List<CoreLabel> tokens = sentence.tokens();
         String sentenceText = sentence.text().toLowerCase();
         
-        // Check if any programming context words are in the sentence
+        // Check for programming context words
         boolean hasContextWord = PROGRAMMING_CONTEXT_WORDS.stream()
                 .anyMatch(word -> sentenceText.contains(word));
         
@@ -153,44 +191,42 @@ public class NLPServiceImpl implements NLPService {
             return false;
         }
         
-        // Check if the word is near a programming context word
-        int windowSize = 5; // Look at 5 words before and after
+        // Check for technical terms and frameworks
+        if (nlpProperties.isEnableTechnicalTermDetection()) {
+            boolean hasTechnicalTerm = nlpProperties.getTechnicalTerms().stream()
+                    .anyMatch(term -> sentenceText.contains(term.toLowerCase()));
+            if (hasTechnicalTerm) return true;
+        }
+        
+        // Check proximity to context words
+        int windowSize = 5;
         int start = Math.max(0, tokenIndex - windowSize);
         int end = Math.min(tokens.size(), tokenIndex + windowSize + 1);
         
-        for (int i = start; i < end; i++) {
-            String word = tokens.get(i).word().toLowerCase();
-            if (PROGRAMMING_CONTEXT_WORDS.contains(word)) {
-                return true;
-            }
-        }
-        
-        return false;
+        return tokens.subList(start, end).stream()
+                .map(token -> token.word().toLowerCase())
+                .anyMatch(word -> PROGRAMMING_CONTEXT_WORDS.contains(word));
     }
 
     private String findClosestProgrammingLanguage(String word, List<String> programmingLanguages) {
-        String closestMatch = word;
-        int minDistance = Integer.MAX_VALUE;
+        if (word.length() < 3) return word;
         
-        // Only consider words that are at least 3 characters long
-        if (word.length() < 3) {
-            return word;
-        }
+        return programmingLanguages.stream()
+                .filter(lang -> Math.abs(word.length() - lang.length()) <= 3)
+                .min(Comparator.comparingInt(lang -> 
+                    levenshteinDistance(word.toLowerCase(), lang.toLowerCase())))
+                .filter(lang -> levenshteinDistance(word.toLowerCase(), lang.toLowerCase()) <= MAX_LEVENSHTEIN_DISTANCE)
+                .orElse(word);
+    }
+
+    private SentenceAnalysis analyzeSentence(CoreSentence sentence) {
+        Tree tree = sentence.sentimentTree();
+        String sentiment = sentence.sentiment();
         
-        for (String lang : programmingLanguages) {
-            // Skip if the word is too different in length from the programming language
-            if (Math.abs(word.length() - lang.length()) > 3) {
-                continue;
-            }
-            
-            int distance = levenshteinDistance(word.toLowerCase(), lang.toLowerCase());
-            if (distance <= MAX_LEVENSHTEIN_DISTANCE && distance < minDistance) {
-                minDistance = distance;
-                closestMatch = lang;
-            }
-        }
-        
-        return closestMatch;
+        return SentenceAnalysis.builder()
+                .parseTree(tree.toString())
+                .sentiment(sentiment)
+                .build();
     }
 
     private int levenshteinDistance(String s1, String s2) {
@@ -218,26 +254,5 @@ public class NLPServiceImpl implements NLPService {
         }
         
         return distance[s1.length()][s2.length()];
-    }
-
-    private SentenceAnalysis analyzeSentence(CoreSentence sentence) {
-        Tree tree = sentence.sentimentTree();
-        String sentiment = sentence.sentiment();
-        
-        return SentenceAnalysis.builder()
-                .parseTree(tree.toString())
-                .sentiment(sentiment)
-                .build();
-    }
-
-    private String calculateOverallSentiment(List<CoreSentence> sentences) {
-        Map<String, Long> sentimentCounts = sentences.stream()
-                .map(CoreSentence::sentiment)
-                .collect(Collectors.groupingBy(s -> s, Collectors.counting()));
-
-        return sentimentCounts.entrySet().stream()
-                .max((e1, e2) -> e1.getValue().compareTo(e2.getValue()))
-                .map(Map.Entry::getKey)
-                .orElse("neutral");
     }
 } 

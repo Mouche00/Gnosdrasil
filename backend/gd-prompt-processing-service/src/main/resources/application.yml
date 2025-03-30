@@ -1,0 +1,327 @@
+nlp:
+  # Core language sets
+  programming-languages:
+    - java
+    - python
+    - javascript
+    - typescript
+    - c++
+    - c#
+    - ruby
+    - php
+    - swift
+    - kotlin
+    - go
+    - rust
+    - scala
+    - r
+    - matlab
+    - sql
+    - html
+    - css
+    - shell
+    - powershell
+
+  learning-keywords:
+    - learn
+    - learning
+    - study
+    - understand
+    - master
+    - practice
+    - improve
+    - develop
+    - enhance
+    - explore
+    - discover
+    - implement
+    - build
+    - create
+    - design
+
+  # Experience level indicators
+  beginner-indicators:
+    - beginner
+    - new
+    - starting
+    - basic
+    - fundamental
+    - entry
+    - novice
+    - first time
+    - learning
+    - introduction
+    - getting started
+    - basics
+    - simple
+    - easy
+    - basic level
+
+  intermediate-indicators:
+    - intermediate
+    - moderate
+    - some experience
+    - familiar
+    - comfortable
+    - proficient
+    - experienced
+    - mid-level
+    - average
+    - standard
+    - regular
+    - typical
+    - common
+    - normal
+    - usual
+
+  advanced-indicators:
+    - advanced
+    - expert
+    - professional
+    - senior
+    - master
+    - guru
+    - specialist
+    - veteran
+    - skilled
+    - proficient
+    - experienced
+    - accomplished
+    - seasoned
+    - polished
+    - refined
+
+  # Sentiment indicators
+  negative-indicators:
+    - difficult
+    - hard
+    - challenging
+    - complex
+    - confusing
+    - frustrating
+    - overwhelming
+    - complicated
+    - problematic
+    - troublesome
+    - stressful
+    - demanding
+    - exhausting
+    - tedious
+    - boring
+
+  positive-indicators:
+    - easy
+    - simple
+    - straightforward
+    - clear
+    - helpful
+    - useful
+    - effective
+    - efficient
+    - productive
+    - successful
+    - enjoyable
+    - interesting
+    - engaging
+    - rewarding
+    - satisfying
+
+  # Enhanced language processing
+  technical-terms:
+    - api
+    - rest
+    - graphql
+    - microservice
+    - container
+    - kubernetes
+    - docker
+    - ci/cd
+    - devops
+    - agile
+    - scrum
+    - tdd
+    - bdd
+    - oop
+    - functional
+    - reactive
+    - async
+    - concurrent
+    - distributed
+    - scalable
+
+  framework-keywords:
+    - spring
+    - django
+    - flask
+    - express
+    - react
+    - angular
+    - vue
+    - laravel
+    - rails
+    - dotnet
+    - flask
+    - fastapi
+    - next.js
+    - nuxt.js
+    - svelte
+    - jquery
+    - bootstrap
+    - tailwind
+    - material-ui
+    - ant-design
+
+  tool-keywords:
+    - git
+    - jenkins
+    - jira
+    - confluence
+    - slack
+    - docker
+    - kubernetes
+    - aws
+    - azure
+    - gcp
+    - terraform
+    - ansible
+    - maven
+    - gradle
+    - npm
+    - yarn
+    - pip
+    - composer
+    - brew
+    - apt
+
+  methodology-keywords:
+    - agile
+    - scrum
+    - kanban
+    - waterfall
+    - lean
+    - six sigma
+    - devops
+    - ci/cd
+    - tdd
+    - bdd
+    - ddd
+    - microservices
+    - serverless
+    - cloud-native
+    - event-driven
+    - reactive
+    - functional
+    - oop
+    - solid
+    - clean code
+
+  # Context patterns
+  context-patterns:
+    learning:
+      - want to learn
+      - need to understand
+      - trying to master
+      - looking to improve
+      - want to develop
+      - need to enhance
+      - trying to explore
+      - looking to discover
+      - want to implement
+      - need to build
+      - trying to create
+      - looking to design
+    development:
+      - building an application
+      - developing a system
+      - creating a project
+      - implementing a feature
+      - designing an architecture
+      - coding a solution
+      - writing a program
+      - developing software
+      - creating an app
+      - building a website
+    problem-solving:
+      - solving a problem
+      - fixing an issue
+      - debugging code
+      - resolving a bug
+      - addressing an error
+      - handling an exception
+      - optimizing performance
+      - improving efficiency
+      - enhancing functionality
+      - upgrading a system
+
+  # Language-specific patterns
+  language-specific-patterns:
+    java:
+      - spring boot
+      - hibernate
+      - maven
+      - gradle
+      - jvm
+      - jdk
+      - jre
+      - servlet
+      - jsp
+      - jpa
+      - jdbc
+      - jee
+      - jms
+      - jmx
+    python:
+      - django
+      - flask
+      - fastapi
+      - pandas
+      - numpy
+      - scipy
+      - tensorflow
+      - pytorch
+      - scikit-learn
+      - pip
+      - virtualenv
+      - conda
+      - pytest
+      - celery
+    javascript:
+      - node.js
+      - express
+      - react
+      - angular
+      - vue
+      - typescript
+      - npm
+      - yarn
+      - webpack
+      - babel
+      - jest
+      - mocha
+      - chai
+      - eslint
+    cpp:
+      - stl
+      - boost
+      - cmake
+      - gcc
+      - clang
+      - visual studio
+      - qt
+      - opencv
+      - eigen
+      - gtest
+      - valgrind
+      - gdb
+      - make
+      - conan
+
+  # Confidence thresholds
+  min-confidence-threshold: 0.7
+  max-ambiguity-threshold: 0.3
+
+  # Processing options
+  enable-context-awareness: true
+  enable-ambiguity-resolution: true
+  enable-technical-term-detection: true
+  enable-framework-detection: true 

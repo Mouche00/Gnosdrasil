@@ -24,5 +24,5 @@ public class TokenInfo {
 
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "sentence_analysis")
-    private SentenceAnalysis sentenceAnalysis;
+//    private SentenceAnalysis sentenceAnalysis;
 } 

@@ -8,5 +8,6 @@ import org.yc.gnosdrasil.gdpromptprocessingservice.entity.NLPResult;
 public interface NLPMapper {
 
     NLPResult toEntity(NLPResultDTO dto);
+
     NLPResultDTO toDto(NLPResult entity);
 }

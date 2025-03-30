@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.NLPResultDTO;
 import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.PromptRequestDTO;
+import org.yc.gnosdrasil.gdpromptprocessingservice.entity.NLPResult;
 import org.yc.gnosdrasil.gdpromptprocessingservice.services.NLPService;
 
 @RestController
@@ -18,7 +19,7 @@ public class PromptController {
     private final NLPService nlpService;
 
     @PostMapping("/process")
-    public ResponseEntity<NLPResultDTO> processIntent(@RequestBody PromptRequestDTO input) {
+    public ResponseEntity<NLPResult> processIntent(@RequestBody PromptRequestDTO input) {
         return ResponseEntity.ok(nlpService.processText(input));
     }
 } 

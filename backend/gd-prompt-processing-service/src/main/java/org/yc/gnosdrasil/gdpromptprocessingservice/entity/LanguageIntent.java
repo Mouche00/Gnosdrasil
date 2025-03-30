@@ -22,5 +22,5 @@ public class LanguageIntent {
 
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "nlp_result")
-    private NLPResult nlpResult;
+//    private NLPResult nlpResult;
 } 

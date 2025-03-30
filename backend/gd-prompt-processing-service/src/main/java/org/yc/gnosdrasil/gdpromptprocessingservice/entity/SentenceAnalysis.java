@@ -23,16 +23,16 @@ public class SentenceAnalysis {
 
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "nlp_result")
-    private NLPResult nlpResult;
+//    private NLPResult nlpResult;
 
 //    @OneToMany(mappedBy = "sentenceAnalysis", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TokenInfo> tokens;
 
 //    @PrePersist
-    protected void onCreate() {
-        // Set up bidirectional relationships
-        if (tokens != null) {
-            tokens.forEach(t -> t.setSentenceAnalysis(this));
-        }
-    }
+//    protected void onCreate() {
+//        // Set up bidirectional relationships
+//        if (tokens != null) {
+//            tokens.forEach(t -> t.setSentenceAnalysis(this));
+//        }
+//    }
 } 
