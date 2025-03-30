@@ -1,0 +1,22 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: gd-config-server
+  config:
+    import:
+      - optional:file:./${spring.application.name}/.env[.properties]
+      - optional:file:./.env[.properties]
+
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/${GIT_USER}/${GIT_REPO}.git
+          username: ${GIT_USER}
+          password: ${GIT_TOKEN}
+          default-label: ${GIT_BRANCH:main}
+          search-paths: configs/{application}
+          clone-on-start: true
+#          force-pull: true

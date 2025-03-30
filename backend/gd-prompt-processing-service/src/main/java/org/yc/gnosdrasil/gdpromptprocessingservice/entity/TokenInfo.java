@@ -1,6 +1,5 @@
 package org.yc.gnosdrasil.gdpromptprocessingservice.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
 @Getter
 @Setter
@@ -8,11 +7,11 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Entity
-@Table(name = "token_infos")
+//@Entity
+//@Table(name = "token_infos")
 public class TokenInfo {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String word;
@@ -23,7 +22,7 @@ public class TokenInfo {
 
     private String ner;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sentence_analysis")
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "sentence_analysis")
     private SentenceAnalysis sentenceAnalysis;
 } 

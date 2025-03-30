@@ -1,31 +1,30 @@
 package org.yc.gnosdrasil.gdpromptprocessingservice.services.impl;
 
-import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.CoreSentence;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
-import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
 import edu.stanford.nlp.trees.Tree;
-import edu.stanford.nlp.trees.TreeCoreAnnotations;
-import edu.stanford.nlp.util.CoreMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.languagetool.JLanguageTool;
 import org.languagetool.language.AmericanEnglish;
 import org.languagetool.rules.RuleMatch;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.yc.gnosdrasil.gdpromptprocessingservice.config.NLPProperties;
 import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.NLPResultDTO;
 import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.PromptRequestDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.entity.*;
-import org.yc.gnosdrasil.gdpromptprocessingservice.repository.NLPResultRepository;
+import org.yc.gnosdrasil.gdpromptprocessingservice.entity.LanguageIntent;
+import org.yc.gnosdrasil.gdpromptprocessingservice.entity.NLPResult;
+import org.yc.gnosdrasil.gdpromptprocessingservice.entity.SentenceAnalysis;
 import org.yc.gnosdrasil.gdpromptprocessingservice.services.LanguageIntentService;
 import org.yc.gnosdrasil.gdpromptprocessingservice.services.NLPService;
 import org.yc.gnosdrasil.gdpromptprocessingservice.utils.mapper.NLPMapper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,7 +34,7 @@ public class NLPServiceImpl implements NLPService {
 
     private final JLanguageTool languageTool = new JLanguageTool(new AmericanEnglish());
     private final StanfordCoreNLP pipeline;
-    private final NLPResultRepository nlpResultRepository;
+//    private final NLPResultRepository nlpResultRepository;
     private final LanguageIntentService languageIntentService;
     private final NLPMapper nlpMapper;
     private final NLPProperties nlpProperties;
@@ -47,11 +46,12 @@ public class NLPServiceImpl implements NLPService {
         "new", "beginner", "intermediate", "advanced", "master", "mastery"
     );
 
-    @Transactional
+//    @Transactional
     public NLPResultDTO processText(PromptRequestDTO promptRequestDTO) {
         String text = promptRequestDTO.prompt();
-        NLPResult result = nlpResultRepository.save(processTextInternal(text));
-        return nlpMapper.toDto(result);
+//        NLPResult result = nlpResultRepository.save(processTextInternal(text));
+//        NLPResult result = nlpResultRepository.save(processTextInternal(text));
+        return nlpMapper.toDto(processTextInternal(text));
     }
 
     private NLPResult processTextInternal(String text) {

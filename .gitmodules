@@ -1,0 +1,3 @@
+[submodule "backend/gd-config-repo"]
+	path = backend/gd-config-repo
+	url = git@github.com:Mouche00/gd-config-repo.git

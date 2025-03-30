@@ -13,6 +13,7 @@
         <module>gd-prompt-processing-service</module>
         <module>gd-board-scraper-service</module>
         <module>gd-api-gateway</module>
+        <module>gd-discovery-server</module>
 <!--        <module>api-gateway</module>-->
 <!--        <module>discovery-server</module>-->
 <!--        <module>kafka-config</module>-->

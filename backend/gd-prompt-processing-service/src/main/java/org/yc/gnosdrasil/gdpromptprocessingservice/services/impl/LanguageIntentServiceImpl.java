@@ -1,9 +1,7 @@
 package org.yc.gnosdrasil.gdpromptprocessingservice.services.impl;
 
-import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreSentence;
-import edu.stanford.nlp.util.CoreMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,7 +11,6 @@ import org.yc.gnosdrasil.gdpromptprocessingservice.services.ExperienceLevelServi
 import org.yc.gnosdrasil.gdpromptprocessingservice.services.LanguageIntentService;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.yc.gnosdrasil.gdpromptprocessingservice.utils.helpers.StringHelper.findContainingClause;
 import static org.yc.gnosdrasil.gdpromptprocessingservice.utils.helpers.StringHelper.splitIntoClauses;
