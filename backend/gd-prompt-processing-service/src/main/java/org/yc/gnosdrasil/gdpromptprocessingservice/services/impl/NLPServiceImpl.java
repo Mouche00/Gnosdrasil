@@ -12,14 +12,12 @@ import org.languagetool.language.AmericanEnglish;
 import org.languagetool.rules.RuleMatch;
 import org.springframework.stereotype.Service;
 import org.yc.gnosdrasil.gdpromptprocessingservice.config.NLPProperties;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.NLPResultDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.PromptRequestDTO;
 import org.yc.gnosdrasil.gdpromptprocessingservice.entity.LanguageIntent;
 import org.yc.gnosdrasil.gdpromptprocessingservice.entity.NLPResult;
 import org.yc.gnosdrasil.gdpromptprocessingservice.entity.SentenceAnalysis;
+import org.yc.gnosdrasil.gdpromptprocessingservice.repository.NLPResultRepository;
 import org.yc.gnosdrasil.gdpromptprocessingservice.services.LanguageIntentService;
 import org.yc.gnosdrasil.gdpromptprocessingservice.services.NLPService;
-import org.yc.gnosdrasil.gdpromptprocessingservice.utils.mapper.NLPMapper;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,8 +31,8 @@ public class NLPServiceImpl implements NLPService {
     private final JLanguageTool languageTool = new JLanguageTool(new AmericanEnglish());
     private final StanfordCoreNLP pipeline;
     private final LanguageIntentService languageIntentService;
-    private final NLPMapper nlpMapper;
     private final NLPProperties nlpProperties;
+    private final NLPResultRepository nlpResultRepository;
 
     private static final int MAX_LEVENSHTEIN_DISTANCE = 2;
     private static final Set<String> PROGRAMMING_CONTEXT_WORDS = Set.of(
@@ -46,23 +44,21 @@ public class NLPServiceImpl implements NLPService {
     // Cache for processed results
     private final Map<String, NLPResult> resultCache = new ConcurrentHashMap<>();
 
-    public NLPResult processText(PromptRequestDTO promptRequestDTO) {
-        String text = promptRequestDTO.prompt();
-        
-        // Check cache first
-        return resultCache.computeIfAbsent(text, k -> {
-            try {
-                return processTextInternal(text);
-            } catch (Exception e) {
-                log.error("Error processing text: {}", text, e);
-                throw new RuntimeException("Failed to process text", e);
-            }
-        });
-    }
-
-    private NLPResult processTextInternal(String text) {
+    public NLPResult processText(String text) {
         // Pre-processing
         String preprocessedText = preprocessText(text);
+
+        // Check cache
+        if (resultCache.containsKey(preprocessedText)) {
+            return resultCache.get(preprocessedText);
+        }
+
+        // Fetch from database and save to cache
+        Optional<NLPResult> nlpResult = nlpResultRepository.findByCorrectedText(preprocessedText);
+        if (nlpResult.isPresent()) {
+            resultCache.put(preprocessedText, nlpResult.get());
+            return nlpResult.get();
+        }
         
         // Core NLP processing
         CoreDocument document = new CoreDocument(preprocessedText);
@@ -79,11 +75,14 @@ public class NLPServiceImpl implements NLPService {
             languageIntentService.extractLanguageIntents(sentences)
         );
 
-        return NLPResult.builder()
-                .correctedText(preprocessedText)
-                .sentenceAnalyses(sentenceAnalyses)
-                .languageIntents(languageIntents)
-                .build();
+        return nlpResultRepository.save(
+                NLPResult.builder()
+                    .originalText(text)
+                    .correctedText(preprocessedText)
+                    .sentenceAnalyses(sentenceAnalyses)
+                    .languageIntents(languageIntents)
+                    .build()
+        );
     }
 
     private String preprocessText(String text) {
