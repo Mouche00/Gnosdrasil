@@ -1,8 +1,11 @@
 package org.yc.gnosdrasil.gdboardscraperservice.services;
 
-import org.yc.gnosdrasil.gdboardscraperservice.entities.ScraperResult;
+import org.yc.gnosdrasil.gdboardscraperservice.entities.JobListing;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.SearchParams;
 
+import java.util.List;
+import java.util.concurrent.Future;
+
 public interface JobBoardScraperService {
-    ScraperResult scrapeJobs(SearchParams searchParams);
+    Future<List<JobListing>> scrapeJobs(SearchParams searchParams);
 }

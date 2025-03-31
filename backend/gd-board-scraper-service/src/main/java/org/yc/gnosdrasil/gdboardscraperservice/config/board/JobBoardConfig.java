@@ -21,4 +21,5 @@ public interface JobBoardConfig {
     int getElementWaitTime();
     int getMaxPages();
     int getRequestDelayMs();
+    PopupConfig getPopupConfig();
 }

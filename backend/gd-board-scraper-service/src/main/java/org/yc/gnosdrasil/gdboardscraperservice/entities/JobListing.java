@@ -26,8 +26,8 @@ public class JobListing extends BaseEntity<String> {
     private String jobType;
     private String experienceLevel;
 
-    @DBRef
-    private ScraperResult scraperResult;
+//    @DBRef
+//    private ScraperResult scraperResult;
 
     @DBRef
     private SearchParams searchParams;

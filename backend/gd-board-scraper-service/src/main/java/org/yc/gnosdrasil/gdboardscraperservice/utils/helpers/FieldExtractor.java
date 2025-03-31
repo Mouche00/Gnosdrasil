@@ -32,9 +32,10 @@ public class FieldExtractor {
         try {
             // Find the target element using the selector
             Optional<WebElement> targetElement = seleniumHelper.findElement(element, fieldSelector.elementLocator());
+            targetElement.ifPresent(e -> System.out.println("Found target element " + e + " for selector " + fieldSelector.elementLocator()));
 
             if (targetElement.isEmpty()) {
-                log.debug("Target element not found for selector: {}", fieldSelector.elementLocator());
+                log.info("Target element not found for selector: {}", fieldSelector.elementLocator());
                 return DEFAULT_NOT_FOUND_VALUE;
             }
 
@@ -52,9 +53,11 @@ public class FieldExtractor {
             // Extract the value using the specified extraction type
             String value = targetElement.map(e -> seleniumHelper.extractValueByType(e, fieldSelector.attributeSelector())).orElse(null);
 
-            if (!fieldSelector.regexPattern().isBlank()) {
+            if (fieldSelector.regexPattern() != null && !fieldSelector.regexPattern().isBlank()) {
                 value = applyRegexPattern(value, fieldSelector.regexPattern(), DEFAULT_NOT_FOUND_VALUE);
             }
+
+            log.info("Extracted value: {}", value);
 
             return value != null && !value.isEmpty() ? value : DEFAULT_NOT_FOUND_VALUE;
 

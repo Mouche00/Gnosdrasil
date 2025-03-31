@@ -25,4 +25,5 @@ public class JobBoardConfigProperties {
     protected int elementWaitTime;
     protected int maxPages;
     protected int requestDelayMs;
+    protected PopupConfig popupConfig;
 }

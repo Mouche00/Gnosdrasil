@@ -91,13 +91,15 @@ public class SeleniumHelper {
      * Extract a value using the specified extraction type
      */
     public String extractValueByType(WebElement element, AttributeSelector attributeSelector) {
+        System.out.println("Extracting value for attribute " + attributeSelector + " with text: " + element.getText());
         switch (attributeSelector.attributeType()) {
             case ATTRIBUTE:
                 return getAttribute(element, attributeSelector.attributeName(), DEFAULT_NOT_FOUND_VALUE);
             case HREF:
                 return getAttribute(element, "href", DEFAULT_NOT_FOUND_VALUE);
             case INNER_HTML:
-                return getAttribute(element, "innerHTML", DEFAULT_NOT_FOUND_VALUE);
+//                return getAttribute(element, "innerHTML", DEFAULT_NOT_FOUND_VALUE);
+                return (String) getDriver().executeScript("return arguments[0].innerHTML;", element);
             case COMPUTED_STYLE:
                 try {
                     String js = "return window.getComputedStyle(arguments[0]).getPropertyValue('" +
@@ -331,16 +333,17 @@ public class SeleniumHelper {
      */
     public String getAttribute(WebElement element, String attribute, String defaultValue) {
         if (element == null) {
-            log.debug("Cannot get attribute {} from null element", attribute);
+            log.info("Cannot get attribute {} from null element", attribute);
             return defaultValue;
         }
 
         try {
-            log.debug("Extracting attribute {} from element", attribute);
+            log.info("Extracting attribute {} from element", attribute);
             String value = element.getDomAttribute(attribute);
+            log.info("Attribute {} value: {}", attribute, value);
             return value != null ? value : defaultValue;
         } catch (Exception e) {
-            log.debug("Could not find attribute {} in element", attribute, e);
+            log.info("Could not find attribute {} in element", attribute, e);
             return defaultValue;
         }
     }

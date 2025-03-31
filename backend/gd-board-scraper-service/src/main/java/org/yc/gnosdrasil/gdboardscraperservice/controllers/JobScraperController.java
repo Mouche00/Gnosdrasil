@@ -11,10 +11,10 @@ import org.yc.gnosdrasil.gdboardscraperservice.services.JobBoardScraperService;
 
 @RestController
 @RequestMapping("/api/linkedin")
-public class LinkedInScraperController {
+public class JobScraperController {
     private final JobBoardScraperService linkedInScraperService;
 
-    public LinkedInScraperController(@Qualifier("linkedinScraperService") JobBoardScraperService linkedInScraperService) {
+    public JobScraperController(@Qualifier("linkedinScraperService") JobBoardScraperService linkedInScraperService) {
         this.linkedInScraperService = linkedInScraperService;
     }
 

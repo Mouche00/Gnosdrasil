@@ -43,7 +43,10 @@ public class StringHelper {
             Pattern pattern = Pattern.compile(regexPattern);
             Matcher matcher = pattern.matcher(input);
 
+            log.info("Applying regex pattern: {}", regexPattern);
+
             if (matcher.find()) {
+                log.info("Found match: {}", matcher.group());
                 // Return the first capturing group, or the entire match if no groups
                 return matcher.groupCount() > 0 ? matcher.group(1) : matcher.group();
             }

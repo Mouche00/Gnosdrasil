@@ -28,7 +28,6 @@ public class LanguageIntentServiceImpl implements LanguageIntentService {
     private final ExperienceLevelService experienceLevelService;
     private final PronounService pronounService;
     private final LearningContextService learningContextService;
-    private final LocationService locationService;
 
     @Override
     public List<LanguageIntent> extractLanguageIntents(List<CoreSentence> sentences) {

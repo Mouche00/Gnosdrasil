@@ -1,6 +1,7 @@
 package org.yc.gnosdrasil.gdboardscraperservice.utils.records;
 
 import lombok.Builder;
+import org.yc.gnosdrasil.gdboardscraperservice.utils.enums.AttributeType;
 
 /**
  * Configuration for extracting a specific field
@@ -12,4 +13,9 @@ public record FieldSelector(
         String regexPattern,
         boolean clickBeforeExtract
 ) {
+    public FieldSelector {
+        if (attributeSelector == null) {
+            attributeSelector = new AttributeSelector(AttributeType.TEXT, "");
+        }
+    }
 }

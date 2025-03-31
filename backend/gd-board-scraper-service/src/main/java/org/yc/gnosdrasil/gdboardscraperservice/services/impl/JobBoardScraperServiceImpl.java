@@ -3,22 +3,25 @@ package org.yc.gnosdrasil.gdboardscraperservice.services.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebElement;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.yc.gnosdrasil.gdboardscraperservice.config.board.JobBoardConfig;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.JobListing;
-import org.yc.gnosdrasil.gdboardscraperservice.entities.ScraperResult;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.SearchParams;
+import org.yc.gnosdrasil.gdboardscraperservice.exceptions.ScraperException;
+import org.yc.gnosdrasil.gdboardscraperservice.repositories.JobBoardScraperRepository;
 import org.yc.gnosdrasil.gdboardscraperservice.services.JobBoardScraperService;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.enums.JobField;
-import org.yc.gnosdrasil.gdboardscraperservice.utils.enums.ScraperJobStatus;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.FieldExtractor;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.SeleniumHelper;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.records.JobSelector;
-import org.yc.gnosdrasil.gdboardscraperservice.utils.records.SearchProperties;
+import org.yc.gnosdrasil.gdboardscraperservice.config.board.PopupConfig;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.UrlHelper.buildSearchUrl;
@@ -33,100 +36,14 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
     private final SeleniumHelper seleniumHelper;
     private final FieldExtractor fieldExtractor;
     private final JobBoardConfig config;
+    private final JobBoardScraperRepository jobBoardScraperRepository;
 
-    /**
-     * Scrape job listings using the provided search parameters
-     */
-//    public ScraperResult scrapeJobs(SearchParams searchParams) {
-//        List<JobListing> jobListings = new ArrayList<>();
-////        ScraperResult result = new ScraperResult();
-//
-//        try {
-//            log.info("Starting job scraping for {}", config.getBoardName());
-//
-//            // Build and navigate to search URL
-//            String searchUrl = buildSearchUrl(config.getBaseUrl(), config.getSearchProperties(), searchParams);
-//            seleniumHelper.goToPage(searchUrl);
-//
-//            // Wait for page to load
-//            seleniumHelper.waitForElement(config.getJobListingsContainerElementLocator());
-//
-//            // Scrape multiple pages
-//            int currentPage = 1;
-////            int maxPages = config.getMaxPages() > 0 ? config.getMaxPages() : Integer.MAX_VALUE;
-////
-////            while (currentPage <= maxPages) {
-////                log.info("Scraping page {} of {}", currentPage, config.getBoardName());
-//
-//                // Find job listings container
-//                Optional<WebElement> container = seleniumHelper.findElement(null,
-//                        config.getJobListingsContainerElementLocator());
-//
-//
-//
-////                if (containers.isEmpty()) {
-////                    log.warn("Job listings container not found");
-////                    break;
-////                }
-//            // Find all job items
-//            List<WebElement> jobItems = container.map(c -> seleniumHelper.findElements(c, config.getJobItemElementLocator()))
-//                    .orElseThrow(() -> new RuntimeException("no job listing container found"));
-//
-//                log.info("Found {} job listings on page {}", jobItems.size(), currentPage);
-//
-//                // Process each job listing
-//                for (WebElement jobItem : jobItems) {
-//                    try {
-//                        seleniumHelper.clickElement(jobItem);
-//                        seleniumHelper.waitForElement(config.getJobDetailsElementLocator());
-//                        JobListing job = extractJobListing(jobItem);
-//                        if (job != null) {
-//                            jobListings.add(job);
-//                        }
-//                    } catch (Exception e) {
-//                        log.error("Error extracting job listing", e);
-//                    }
-//
-//                    // Add delay to avoid rate limiting
-//                    if (config.getRequestDelayMs() > 0) {
-//                        TimeUnit.MILLISECONDS.sleep(config.getRequestDelayMs());
-//                    }
-//                }
-//
-//                // Check if there's a next page and navigate to it
-////                if (!navigateToNextPage(driver)) {
-////                    log.info("No more pages to scrape");
-////                    break;
-////                }
-//
-////                currentPage++;
-////            }
-//
-//            log.info("Job scraping completed. Found {} job listings", jobListings.size());
-//
-//            return ScraperResult.builder()
-//                    .status(ScraperJobStatus.COMPLETED)
-////                    .jobListings(jobListings)
-//                    .jobsFound(jobListings.size())
-//                    .boardName(config.getBoardName())
-//                    .build();
-//
-//        } catch (Exception e) {
-//            log.error("Error during job scraping", e);
-//            return ScraperResult.builder()
-//                    .status(ScraperJobStatus.FAILED)
-//                    .boardName(config.getBoardName())
-////                    .jobListings(jobListings) // Return any jobs that were successfully scraped
-//                    .build();
-//        } finally {
-//            // Always release the driver
-//            seleniumHelper.releaseDriver();
-//        }
-//    }
-
-    public ScraperResult scrapeJobs(SearchParams searchParams) {
+    @Async
+    public Future<List<JobListing>> scrapeJobs(SearchParams searchParams) {
         List<JobListing> jobListings = new ArrayList<>();
 //        ScraperResult result = new ScraperResult();
+
+        log.info("Starting scraping job with config {}", config.getJobSelectors());
 
         try {
             log.info("Starting job scraping for {}", config.getBoardName());
@@ -161,15 +78,48 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
 
             log.info("Found {} job listings on page {}", jobItems.size(), currentPage);
 
+            // Handle popup if enabled and configured
+            PopupConfig popupConfig = config.getPopupConfig();
+            if (popupConfig != null && popupConfig.isEnabled()) {
+                try {
+                    log.info("Handling popup {}", popupConfig.getPopupLocator());
+                    // Wait for popup to appear
+                    seleniumHelper.waitForElement(popupConfig.getPopupLocator());
+
+                    log.info("Clicking popup close button {}", popupConfig.getCloseButtonLocator());
+
+                    // Find and click close button
+                    Optional<WebElement> closeButton = seleniumHelper.findElement(null, popupConfig.getCloseButtonLocator());
+                    closeButton.ifPresent((b) -> {
+                        log.info("Found popup close button {}", b);
+                        seleniumHelper.clickElement(b);
+                    });
+
+                    log.info("Waiting for popup to close");
+
+                    // Wait configured time after closing
+                    if (popupConfig.getWaitTimeMs() > 0) {
+                        Thread.sleep(popupConfig.getWaitTimeMs());
+                    }
+                } catch (Exception e) {
+                    log.debug("Error handling popup: {}", e.getMessage());
+                }
+            }
+
             // Process each job listing
             for (WebElement jobItem : jobItems) {
                 try {
+                    String jobId = fieldExtractor.extractValue(jobItem, config.getJobSelectors().stream().filter(js -> js.field() == JobField.JOB_ID).findFirst().orElse(null).selector());
+                    if(jobBoardScraperRepository.findByJobId(jobId) != null) {
+                        continue;
+                    }
+
                     seleniumHelper.clickElement(jobItem);
                     seleniumHelper.waitForElement(config.getJobDetailsElementLocator());
+
                     JobListing job = extractJobListing(jobItem);
-                    if (job != null) {
-                        jobListings.add(job);
-                    }
+                    job.setSearchParams(searchParams);
+                    jobListings.add(job);
                 } catch (Exception e) {
                     log.error("Error extracting job listing", e);
                 }
@@ -191,20 +141,10 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
 
             log.info("Job scraping completed. Found {} job listings", jobListings.size());
 
-            return ScraperResult.builder()
-                    .status(ScraperJobStatus.COMPLETED)
-//                    .jobListings(jobListings)
-                    .jobsFound(jobListings.size())
-                    .boardName(config.getBoardName())
-                    .build();
-
+            return CompletableFuture.completedFuture(jobListings);
         } catch (Exception e) {
             log.error("Error during job scraping", e);
-            return ScraperResult.builder()
-                    .status(ScraperJobStatus.FAILED)
-                    .boardName(config.getBoardName())
-//                    .jobListings(jobListings) // Return any jobs that were successfully scraped
-                    .build();
+            throw new ScraperException("Error during job scraping: " + e);
         } finally {
             // Always release the driver
             seleniumHelper.releaseDriver();
@@ -219,6 +159,7 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
 
         // Extract each configured field
         for (JobSelector jobSelector : config.getJobSelectors()) {
+            log.info("Extracting value for field: {}", jobSelector.field());
 
             String value = fieldExtractor.extractValue(jobElement, jobSelector.selector());
 
@@ -228,6 +169,7 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
 
         JobListing job = builder.build();
         log.info("Extracted job: {}", job);
+        jobBoardScraperRepository.save(job);
 
         return job;
     }

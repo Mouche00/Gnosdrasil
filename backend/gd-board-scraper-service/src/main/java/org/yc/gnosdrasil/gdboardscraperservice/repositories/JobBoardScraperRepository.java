@@ -5,5 +5,7 @@ import org.springframework.stereotype.Repository;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.JobListing;
 
 @Repository
-public interface LinkedInJobScraperRepository extends MongoRepository <JobListing, String> {
+public interface JobBoardScraperRepository extends MongoRepository <JobListing, String> {
+
+    JobListing findByJobId(String jobId);
 }
