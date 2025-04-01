@@ -1,10 +1,7 @@
 package org.yc.gnosdrasil.gdpromptprocessingservice.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,10 +9,13 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
+@ToString
 @Entity
 @Table(name = "search_params")
 public class SearchParams extends BaseEntity<Long> {
-    @Transient
+    @ElementCollection
     private List<String> keywords;
     private String experienceLevel;
     private String location;

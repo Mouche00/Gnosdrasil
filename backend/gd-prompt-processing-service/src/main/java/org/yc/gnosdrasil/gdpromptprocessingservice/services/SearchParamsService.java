@@ -1,8 +1,8 @@
 package org.yc.gnosdrasil.gdpromptprocessingservice.services;
 
 import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.PromptRequestDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.SearchParamsRequestDTO;
+import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.SearchParamsResponseDTO;
 
 public interface SearchParamsService {
-    SearchParamsRequestDTO generateSearchParams(PromptRequestDTO promptRequestDTO);
+    SearchParamsResponseDTO generateSearchParams(PromptRequestDTO promptRequestDTO);
 }

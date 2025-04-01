@@ -110,16 +110,15 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
             for (WebElement jobItem : jobItems) {
                 try {
                     String jobId = fieldExtractor.extractValue(jobItem, config.getJobSelectors().stream().filter(js -> js.field() == JobField.JOB_ID).findFirst().orElse(null).selector());
-                    if(jobBoardScraperRepository.findByJobId(jobId) != null) {
-                        continue;
+                    if(jobBoardScraperRepository.findByJobId(jobId).isEmpty()) {
+                        log.info("Job listing with id {} is not existent", jobId);
+                        seleniumHelper.clickElement(jobItem);
+                        seleniumHelper.waitForElement(config.getJobDetailsElementLocator());
+
+                        JobListing job = extractJobListing(jobItem);
+                        job.setSearchParams(searchParams);
+                        jobListings.add(job);
                     }
-
-                    seleniumHelper.clickElement(jobItem);
-                    seleniumHelper.waitForElement(config.getJobDetailsElementLocator());
-
-                    JobListing job = extractJobListing(jobItem);
-                    job.setSearchParams(searchParams);
-                    jobListings.add(job);
                 } catch (Exception e) {
                     log.error("Error extracting job listing", e);
                 }

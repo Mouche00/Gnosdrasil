@@ -1,13 +1,18 @@
 package org.yc.gnosdrasil.gdpromptprocessingservice.utils.mapper;
 
 import org.mapstruct.Mapper;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.SearchParamsRequestDTO;
+import org.mapstruct.Mapping;
+import org.mapstruct.Mappings;
+import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.SearchParamsResponseDTO;
 import org.yc.gnosdrasil.gdpromptprocessingservice.entity.SearchParams;
 
 @Mapper(componentModel = "spring")
 public interface SearchParamsMapper {
 
-    SearchParams toEntity(SearchParamsRequestDTO dto);
+    SearchParams toEntity(SearchParamsResponseDTO dto);
 
-    SearchParamsRequestDTO toDto(SearchParams entity);
+    @Mappings({
+            @Mapping(source = "createdAt", target = "date"),
+    })
+    SearchParamsResponseDTO toDto(SearchParams entity);
 }

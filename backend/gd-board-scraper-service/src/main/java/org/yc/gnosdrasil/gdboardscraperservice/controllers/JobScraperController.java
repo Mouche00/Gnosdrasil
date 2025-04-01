@@ -2,15 +2,13 @@ package org.yc.gnosdrasil.gdboardscraperservice.controllers;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.SearchParams;
+import org.yc.gnosdrasil.gdboardscraperservice.repositories.JobBoardScraperRepository;
 import org.yc.gnosdrasil.gdboardscraperservice.services.JobBoardScraperService;
 
 @RestController
-@RequestMapping("/api/linkedin")
+@RequestMapping("/api/board")
 public class JobScraperController {
     private final JobBoardScraperService linkedInScraperService;
 
@@ -18,7 +16,7 @@ public class JobScraperController {
         this.linkedInScraperService = linkedInScraperService;
     }
 
-    @PostMapping
+    @PostMapping("scrape")
     public ResponseEntity<?> startScraping(@RequestBody SearchParams request) {
         try {
             // Validate request
