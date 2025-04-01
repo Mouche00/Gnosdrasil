@@ -3,8 +3,10 @@ package org.yc.gnosdrasil.gdpromptprocessingservice.services.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.yc.gnosdrasil.gdpromptprocessingservice.client.JobBoardScraperClient;
+import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.JobListingDTO;
 import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.PromptRequestDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.SearchParamsResponseDTO;
+import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.SearchParamsDTO;
 import org.yc.gnosdrasil.gdpromptprocessingservice.entity.LanguageIntent;
 import org.yc.gnosdrasil.gdpromptprocessingservice.entity.NLPResult;
 import org.yc.gnosdrasil.gdpromptprocessingservice.entity.SearchParams;
@@ -25,23 +27,27 @@ public class SearchParamsServiceImpl implements SearchParamsService {
 
     private final NLPService nlpService;
     private final SearchParamsMapper searchParamsMapper;
-    private final SearchParamsRepository searchParamsRepository;
+    private final JobBoardScraperClient jobBoardScraperClient;
 
-    @Override
-    public SearchParamsResponseDTO generateSearchParams(PromptRequestDTO promptRequestDTO) {
+    private SearchParamsDTO generateSearchParams(String prompt) {
         try {
-            NLPResult nlpResult = nlpService.processText(promptRequestDTO.prompt());
+            NLPResult nlpResult = nlpService.processText(prompt);
             List<LanguageIntent> languageIntents = nlpResult.getLanguageIntents();
             log.info("Generated language intents: {}", languageIntents.stream().findFirst().orElse(null).isFocus());
-            SearchParams searchParams = searchParamsRepository.save(SearchParams.builder()
+            return searchParamsMapper.toDto(SearchParams.builder()
                     .keywords(languageIntents.stream().map(LanguageIntent::getLang).collect(Collectors.toList()))
                     .experienceLevel(languageIntents.stream().findFirst().map(LanguageIntent::getLevel).orElse(null))
                     .location("Morocco")
                     .build());
-            return searchParamsMapper.toDto(searchParams);
         } catch (Exception e) {
             log.error("Failed to generate search params", e);
             throw new NLPProcessingException("Failed to generate search params", e);
         }
+    }
+
+    @Override
+    public List<JobListingDTO> getJobListings(PromptRequestDTO promptRequestDTO) {
+        SearchParamsDTO searchParamsDTO = generateSearchParams(promptRequestDTO.prompt());
+        return jobBoardScraperClient.startScraping(searchParamsDTO);
     }
 }

@@ -1,8 +1,11 @@
 package org.yc.gnosdrasil.gdpromptprocessingservice.services;
 
+import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.JobListingDTO;
 import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.PromptRequestDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.SearchParamsResponseDTO;
+import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.SearchParamsDTO;
+
+import java.util.List;
 
 public interface SearchParamsService {
-    SearchParamsResponseDTO generateSearchParams(PromptRequestDTO promptRequestDTO);
+    List<JobListingDTO> getJobListings(PromptRequestDTO promptRequestDTO);
 }

@@ -2,6 +2,7 @@ package org.yc.gnosdrasil.gdboardscraperservice.utils.helpers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.yc.gnosdrasil.gdboardscraperservice.dtos.SearchParamsDTO;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.SearchParams;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.records.SearchProperties;
 
@@ -16,12 +17,12 @@ public class UrlHelper {
     /**
      * Build the search URL by replacing placeholders with search parameters
      */
-    public static String buildSearchUrl(String baseUrl, SearchProperties searchProperties, SearchParams searchParams) {
+    public static String buildSearchUrl(String baseUrl, SearchProperties searchProperties, SearchParamsDTO searchParamsDTO) {
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl);
 
         Map<String, String> searchParamsMap = Map.of(
-                searchProperties.keywordProperty(), String.join(" ", searchParams.getKeywords()),
-                searchProperties.locationProperty(), searchParams.getLocation()
+                searchProperties.keywordProperty(), String.join(" ", searchParamsDTO.keywords()),
+                searchProperties.locationProperty(), searchParamsDTO.location()
 //                searchProperties.experienceLevelProperty(), searchParams.getExperienceLevel(),
 //                searchProperties.datePostedProperty(), searchParams.getDatePosted()
         );

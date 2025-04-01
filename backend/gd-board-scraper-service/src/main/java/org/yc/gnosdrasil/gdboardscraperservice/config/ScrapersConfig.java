@@ -8,6 +8,7 @@ import org.yc.gnosdrasil.gdboardscraperservice.services.JobBoardScraperService;
 import org.yc.gnosdrasil.gdboardscraperservice.services.impl.JobBoardScraperServiceImpl;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.FieldExtractor;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.SeleniumHelper;
+import org.yc.gnosdrasil.gdboardscraperservice.utils.mappers.JobListingMapper;
 
 @Configuration
 @RequiredArgsConstructor
@@ -16,9 +17,10 @@ public class ScrapersConfig {
     private final FieldExtractor fieldExtractor;
     private final LinkedinJobBoardConfig linkedinJobBoardConfig;
     private final JobBoardScraperRepository jobBoardScraperRepository;
+    private final JobListingMapper jobListingMapper;
 
     @Bean("linkedinScraperService")
     public JobBoardScraperService linkedinScraperService() {
-        return new JobBoardScraperServiceImpl(seleniumHelper, fieldExtractor, linkedinJobBoardConfig, jobBoardScraperRepository);
+        return new JobBoardScraperServiceImpl(seleniumHelper, fieldExtractor, linkedinJobBoardConfig, jobBoardScraperRepository, jobListingMapper);
     }
 }

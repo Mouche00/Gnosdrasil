@@ -6,6 +6,8 @@ import org.openqa.selenium.WebElement;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.yc.gnosdrasil.gdboardscraperservice.config.board.JobBoardConfig;
+import org.yc.gnosdrasil.gdboardscraperservice.dtos.JobListingDTO;
+import org.yc.gnosdrasil.gdboardscraperservice.dtos.SearchParamsDTO;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.JobListing;
 import org.yc.gnosdrasil.gdboardscraperservice.entities.SearchParams;
 import org.yc.gnosdrasil.gdboardscraperservice.exceptions.ScraperException;
@@ -14,6 +16,7 @@ import org.yc.gnosdrasil.gdboardscraperservice.services.JobBoardScraperService;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.enums.JobField;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.FieldExtractor;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.SeleniumHelper;
+import org.yc.gnosdrasil.gdboardscraperservice.utils.mappers.JobListingMapper;
 import org.yc.gnosdrasil.gdboardscraperservice.utils.records.JobSelector;
 import org.yc.gnosdrasil.gdboardscraperservice.config.board.PopupConfig;
 
@@ -37,10 +40,17 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
     private final FieldExtractor fieldExtractor;
     private final JobBoardConfig config;
     private final JobBoardScraperRepository jobBoardScraperRepository;
+    private final JobListingMapper jobListingMapper;
+
+    public List<JobListingDTO> getAllJobListings(SearchParamsDTO searchParamsDTO) {
+        List<JobListingDTO> jobListingDTOS = jobListingMapper.toDTOs(jobBoardScraperRepository.findAll());
+        log.info("Found {} job listings, first one {}", jobListingDTOS.size(), jobListingDTOS.get(0));
+        return jobListingDTOS;
+    }
 
     @Async
-    public Future<List<JobListing>> scrapeJobs(SearchParams searchParams) {
-        List<JobListing> jobListings = new ArrayList<>();
+    public void scrapeJobs(SearchParamsDTO searchParamsDTO) {
+//        List<JobListing> jobListings = new ArrayList<>();
 //        ScraperResult result = new ScraperResult();
 
         log.info("Starting scraping job with config {}", config.getJobSelectors());
@@ -49,7 +59,7 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
             log.info("Starting job scraping for {}", config.getBoardName());
 
             // Build and navigate to search URL
-            String searchUrl = buildSearchUrl(config.getBaseUrl(), config.getSearchProperties(), searchParams);
+            String searchUrl = buildSearchUrl(config.getBaseUrl(), config.getSearchProperties(), searchParamsDTO);
             seleniumHelper.goToPage(searchUrl);
 
             // Wait for page to load
@@ -116,8 +126,8 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
                         seleniumHelper.waitForElement(config.getJobDetailsElementLocator());
 
                         JobListing job = extractJobListing(jobItem);
-                        job.setSearchParams(searchParams);
-                        jobListings.add(job);
+//                        job.setSearchParams(searchParamsDTO);
+//                        jobListings.add(job);
                     }
                 } catch (Exception e) {
                     log.error("Error extracting job listing", e);
@@ -138,9 +148,9 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
 //                currentPage++;
 //            }
 
-            log.info("Job scraping completed. Found {} job listings", jobListings.size());
+            log.info("Job scraping completed");
 
-            return CompletableFuture.completedFuture(jobListings);
+//            return jobListingMapper.toDTOs(jobBoardScraperRepository.findAll());
         } catch (Exception e) {
             log.error("Error during job scraping", e);
             throw new ScraperException("Error during job scraping: " + e);

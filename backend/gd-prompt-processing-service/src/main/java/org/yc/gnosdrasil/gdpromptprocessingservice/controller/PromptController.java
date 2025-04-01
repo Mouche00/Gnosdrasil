@@ -6,10 +6,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.JobListingDTO;
 import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.PromptRequestDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.SearchParamsResponseDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.entity.SearchParams;
 import org.yc.gnosdrasil.gdpromptprocessingservice.services.SearchParamsService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/prompt")
@@ -19,7 +20,7 @@ public class PromptController {
     private final SearchParamsService searchParamsService;
 
     @PostMapping("/process")
-    public ResponseEntity<SearchParamsResponseDTO> processIntent(@RequestBody PromptRequestDTO input) {
-        return ResponseEntity.ok(searchParamsService.generateSearchParams(input));
+    public ResponseEntity<List<JobListingDTO>> processIntent(@RequestBody PromptRequestDTO input) {
+        return ResponseEntity.ok(searchParamsService.getJobListings(input));
     }
 } 
