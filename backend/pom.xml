@@ -14,6 +14,7 @@
         <module>gd-board-scraper-service</module>
         <module>gd-api-gateway</module>
         <module>gd-discovery-server</module>
+        <module>gd-market-analysis-service</module>
 <!--        <module>api-gateway</module>-->
 <!--        <module>discovery-server</module>-->
 <!--        <module>kafka-config</module>-->
