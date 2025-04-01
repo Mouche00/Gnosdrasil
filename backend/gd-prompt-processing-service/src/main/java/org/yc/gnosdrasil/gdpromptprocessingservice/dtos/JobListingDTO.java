@@ -1,5 +1,8 @@
 package org.yc.gnosdrasil.gdpromptprocessingservice.dtos;
 
+import lombok.Builder;
+
+@Builder
 public record JobListingDTO(
         String jobId,
         String title,

@@ -48,6 +48,7 @@ public class SearchParamsServiceImpl implements SearchParamsService {
     @Override
     public List<JobListingDTO> getJobListings(PromptRequestDTO promptRequestDTO) {
         SearchParamsDTO searchParamsDTO = generateSearchParams(promptRequestDTO.prompt());
-        return jobBoardScraperClient.startScraping(searchParamsDTO);
+        return List.of(JobListingDTO.builder().build());
+//        return jobBoardScraperClient.startScraping(searchParamsDTO);
     }
 }
