@@ -6,6 +6,7 @@ spring:
     name: gd-config-server
   config:
     import:
+      - optional:file:./backend/${spring.application.name}/.env[.properties]
       - optional:file:./${spring.application.name}/.env[.properties]
       - optional:file:./.env[.properties]
 
