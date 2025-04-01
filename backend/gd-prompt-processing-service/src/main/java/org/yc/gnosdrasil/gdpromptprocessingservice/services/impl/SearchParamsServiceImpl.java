@@ -26,20 +26,19 @@ public class SearchParamsServiceImpl implements SearchParamsService {
     private final NLPService nlpService;
     private final SearchParamsMapper searchParamsMapper;
     private final SearchParamsRepository searchParamsRepository;
-    private final SearchParamsProducerServiceImpl searchParamsProducerServiceImpl;
 
     @Override
-    public void generateSearchParams(PromptRequestDTO promptRequestDTO) {
+    public SearchParamsResponseDTO generateSearchParams(PromptRequestDTO promptRequestDTO) {
         try {
             NLPResult nlpResult = nlpService.processText(promptRequestDTO.prompt());
             List<LanguageIntent> languageIntents = nlpResult.getLanguageIntents();
             log.info("Generated language intents: {}", languageIntents.stream().findFirst().orElse(null).isFocus());
-            searchParamsProducerServiceImpl.sendSearchParams(SearchParams.builder()
+            SearchParams searchParams = searchParamsRepository.save(SearchParams.builder()
                     .keywords(languageIntents.stream().map(LanguageIntent::getLang).collect(Collectors.toList()))
                     .experienceLevel(languageIntents.stream().findFirst().map(LanguageIntent::getLevel).orElse(null))
                     .location("Morocco")
-                    .datePosted("Today")
                     .build());
+            return searchParamsMapper.toDto(searchParams);
         } catch (Exception e) {
             log.error("Failed to generate search params", e);
             throw new NLPProcessingException("Failed to generate search params", e);

@@ -12,9 +12,15 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-public class SearchParams {
+@Entity
+@Table(name = "search_params")
+public class SearchParams extends BaseEntity<Long> {
+    @ElementCollection
     private List<String> keywords;
     private String experienceLevel;
     private String location;
-    private String datePosted;
+
+    @OneToOne
+    @JoinColumn(name = "nlp_result")
+    private NLPResult nlpResult;
 } 
