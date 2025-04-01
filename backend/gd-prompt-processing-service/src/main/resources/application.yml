@@ -324,4 +324,17 @@ nlp:
   enable-context-awareness: true
   enable-ambiguity-resolution: true
   enable-technical-term-detection: true
-  enable-framework-detection: true 
+  enable-framework-detection: true
+
+spring:
+  application:
+    name: gd-prompt-processing-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+kafka:
+  topic:
+    search-params: board-search-params 

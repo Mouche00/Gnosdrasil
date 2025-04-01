@@ -4,5 +4,5 @@ import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.PromptRequestDTO;
 import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.SearchParamsResponseDTO;
 
 public interface SearchParamsService {
-    SearchParamsResponseDTO generateSearchParams(PromptRequestDTO promptRequestDTO);
+    void generateSearchParams(PromptRequestDTO promptRequestDTO);
 }
