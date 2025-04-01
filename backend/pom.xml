@@ -15,9 +15,8 @@
         <module>gd-api-gateway</module>
         <module>gd-discovery-server</module>
         <module>gd-market-analysis-service</module>
-<!--        <module>api-gateway</module>-->
-<!--        <module>discovery-server</module>-->
-<!--        <module>kafka-config</module>-->
+        <module>gd-roadmap-service</module>
+        <module>gd-user-service</module>
     </modules>
 
     <properties>
