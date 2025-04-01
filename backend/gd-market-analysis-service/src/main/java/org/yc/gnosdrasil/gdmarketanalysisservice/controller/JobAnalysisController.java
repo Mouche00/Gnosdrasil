@@ -10,7 +10,7 @@ import org.yc.gnosdrasil.gdmarketanalysisservice.model.JobTrendAnalysis;
 import org.yc.gnosdrasil.gdmarketanalysisservice.service.JobAnalysisService;
 
 @RestController
-@RequestMapping("/api/v1/analysis")
+@RequestMapping("/api/analysis")
 @RequiredArgsConstructor
 public class JobAnalysisController {
     private final JobAnalysisService jobAnalysisService;
