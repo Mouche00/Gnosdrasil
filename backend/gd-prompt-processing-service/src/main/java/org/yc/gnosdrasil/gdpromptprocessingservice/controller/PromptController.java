@@ -6,10 +6,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.GlobalResponseDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.JobAnalysisDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.JobListingDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.PromptRequestDTO;
+import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.*;
 import org.yc.gnosdrasil.gdpromptprocessingservice.services.SearchParamsService;
 
 import java.util.List;
@@ -24,5 +21,15 @@ public class PromptController {
     @PostMapping("/process")
     public ResponseEntity<GlobalResponseDTO> processIntent(@RequestBody PromptRequestDTO input) {
         return ResponseEntity.ok(searchParamsService.getGlobalResponse(input));
+    }
+
+    @PostMapping("/roadmap")
+    public ResponseEntity<RoadmapResponseDTO> processIntentAndGenerateRoadmap(@RequestBody PromptRequestDTO input) {
+        return ResponseEntity.ok(searchParamsService.getRoadmap(input));
+    }
+
+    @PostMapping("/jobs")
+    public ResponseEntity<JobAnalysisDTO> processIntentAndGenerateJobs(@RequestBody PromptRequestDTO input) {
+        return ResponseEntity.ok(searchParamsService.getAnalysis(input));
     }
 } 

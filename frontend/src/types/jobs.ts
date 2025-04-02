@@ -26,16 +26,6 @@ export interface JobTypeDistribution {
   [key: string]: number;
 }
 
-export interface JobAnalysisDTO {
-  topJobTitles: JobTitle[];
-  topSkills: Skill[];
-  dailyJobCounts: DailyJobCount[];
-  topCompanies: Company[];
-  experienceLevelDistribution: ExperienceLevelDistribution;
-  jobTypeDistribution: JobTypeDistribution;
-  jobs: Job[];
-}
-
 export interface Job {
   jobId: string;
   title: string;
@@ -51,6 +41,11 @@ export interface Job {
 }
 
 export interface JobResponse {
-  // jobs: Job[];
-  jobAnalysisDTO: JobAnalysisDTO;
+  topJobTitles: JobTitle[];
+  topSkills: Skill[];
+  dailyJobCounts: DailyJobCount[];
+  topCompanies: Company[];
+  experienceLevelDistribution: ExperienceLevelDistribution;
+  jobTypeDistribution: JobTypeDistribution;
+  jobs: Job[];
 } 

@@ -7,4 +7,5 @@ import java.util.List;
 public interface SearchParamsService {
     JobAnalysisDTO getAnalysis(PromptRequestDTO promptRequestDTO);
     GlobalResponseDTO getGlobalResponse(PromptRequestDTO promptRequestDTO);
+    RoadmapResponseDTO getRoadmap(PromptRequestDTO promptRequestDTO);
 }
