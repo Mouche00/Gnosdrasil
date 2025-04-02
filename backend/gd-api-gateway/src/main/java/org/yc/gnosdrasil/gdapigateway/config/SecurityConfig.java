@@ -40,7 +40,7 @@ public class SecurityConfig {
     @Autowired
     private JwtUtils jwtUtils;
 
-    @Value("${cors.config.allowed.origin}")
+    @Value("${cors.config.allowed.origin:http://localhost:5173}")
     private String ALLOWED_ORIGIN;
 
     @Bean

@@ -1,42 +1,84 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
+@import url('https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap');
+
+/* Neumorphic styles */
+:root {
+  --background-color: #f0f0f0;
+  --text-color: #333;
+  --shadow-light: 8px 8px 16px #d1d1d1;
+  --shadow-dark: -8px -8px 16px #ffffff;
+  --shadow-inner-light: inset 4px 4px 8px #d1d1d1;
+  --shadow-inner-dark: inset -4px -4px 8px #ffffff;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+/* Neumorphic card styles */
+.neumorphic-card {
+  background: var(--background-color);
+  border-radius: 20px;
+  box-shadow: var(--shadow-light), var(--shadow-dark);
   padding: 2rem;
-  text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Neumorphic input styles */
+.neumorphic-input {
+  background: var(--background-color);
+  border: none;
+  border-radius: 10px;
+  box-shadow: var(--shadow-inner-light), var(--shadow-inner-dark);
+  padding: 1rem;
+  width: 100%;
+  transition: all 0.3s ease;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.neumorphic-input:focus {
+  outline: none;
+  box-shadow: var(--shadow-inner-light), var(--shadow-inner-dark);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* Neumorphic button styles */
+.neumorphic-button {
+  background: var(--background-color);
+  border: none;
+  border-radius: 10px;
+  box-shadow: var(--shadow-light), var(--shadow-dark);
+  padding: 1rem 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.card {
-  padding: 2em;
+.neumorphic-button:hover {
+  box-shadow: var(--shadow-inner-light), var(--shadow-inner-dark);
 }
 
-.read-the-docs {
-  color: #888;
+.neumorphic-button:active {
+  box-shadow: var(--shadow-inner-light), var(--shadow-inner-dark);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
