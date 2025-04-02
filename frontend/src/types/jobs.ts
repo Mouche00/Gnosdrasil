@@ -27,25 +27,37 @@ export interface JobTypeDistribution {
 }
 
 export interface Job {
-  id: string;
+  jobId: string;
   title: string;
   company: string;
   location: string;
+  salary: string | null;
   description: string;
-  salary?: string;
-  jobType: string;
-  experienceLevel: string;
   datePosted: string;
   url: string;
-  applicationUrl?: string;
+  applyUrl: string;
+  jobType: string;
+  experienceLevel: string;
 }
 
 export interface JobResponse {
   topJobTitles: JobTitle[];
   topSkills: Skill[];
+  dailyJobCounts: DailyJobCount[];
   topCompanies: Company[];
   experienceLevelDistribution: ExperienceLevelDistribution;
   jobTypeDistribution: JobTypeDistribution;
-  dailyJobCounts: DailyJobCount[];
   jobs: Job[];
+}
+
+export interface RoadmapStep {
+  id: string;
+  label: string;
+  connectedSteps: RoadmapStep[];
+}
+
+export interface Roadmap {
+  id: string | null;
+  title: string;
+  steps: RoadmapStep[];
 } 

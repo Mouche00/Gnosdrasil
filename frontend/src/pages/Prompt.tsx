@@ -3,9 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/api';
 import JobAnalysis from '../components/JobAnalysis';
 import JobList from '../components/JobList';
-import RoadmapGraph from '../components/RoadmapGraph';
-import { JobResponse } from '../types/jobs';
-import { Roadmap } from '../types/roadmap';
+import Roadmap from '../components/Roadmap';
+import { JobResponse, Roadmap as RoadmapType } from '../types/jobs';
 
 interface PromptResponse {
   text: string;
@@ -17,7 +16,7 @@ const Prompt: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [responses, setResponses] = useState<PromptResponse[]>([]);
   const [jobData, setJobData] = useState<JobResponse | null>(null);
-  const [roadmapData, setRoadmapData] = useState<Roadmap | null>(null);
+  const [roadmapData, setRoadmapData] = useState<RoadmapType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,9 +24,11 @@ const Prompt: React.FC = () => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    setJobData(null);
+    setRoadmapData(null);
 
     try {
-      // Fetch job data
+      // Get job analysis data
       const { data: jobResponse, error: jobError } = await apiService.post<JobResponse>('/prompt/jobs', {
         prompt: prompt.trim()
       });
@@ -36,8 +37,10 @@ const Prompt: React.FC = () => {
         throw new Error(jobError);
       }
 
-      // Fetch roadmap data
-      const { data: roadmapResponse, error: roadmapError } = await apiService.post<Roadmap>('/prompt/roadmap', {
+      setJobData(jobResponse);
+
+      // Get roadmap data
+      const { data: roadmapResponse, error: roadmapError } = await apiService.post<RoadmapType>('/prompt/roadmap', {
         prompt: prompt.trim()
       });
 
@@ -45,7 +48,6 @@ const Prompt: React.FC = () => {
         throw new Error(roadmapError);
       }
 
-      setJobData(jobResponse);
       setRoadmapData(roadmapResponse);
       const response: PromptResponse = {
         text: prompt,
@@ -139,13 +141,7 @@ const Prompt: React.FC = () => {
 
         {roadmapData && (
           <section className="bg-white rounded-2xl shadow-neumorphic p-6 mt-8">
-            <h2 className="text-2xl font-semibold text-soft-dark mb-6 flex items-center">
-              <svg className="w-6 h-6 mr-2 text-pastel-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-              Learning Roadmap
-            </h2>
-            <RoadmapGraph data={roadmapData} />
+            <Roadmap data={roadmapData} />
           </section>
         )}
       </div>
