@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { apiService } from '../services/api';
 
 interface PromptResponse {
   text: string;
   timestamp: string;
+}
+
+interface ApiPromptResponse {
+  response: string;
 }
 
 const Prompt: React.FC = () => {
@@ -19,17 +24,26 @@ const Prompt: React.FC = () => {
     setLoading(true);
 
     try {
-      // TODO: Implement API call to generate response
-      // For now, we'll simulate a response
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { data, error } = await apiService.post<ApiPromptResponse>('/prompt/process', {
+        prompt: prompt.trim()
+      });
+
+      if (error) {
+        throw new Error(error);
+      }
+
       const response: PromptResponse = {
-        text: `This is a sample response to: "${prompt}"`,
+        text: data.response,
         timestamp: new Date().toISOString(),
       };
+
+      console.log(data);
+      
+      
       setResponses(prev => [response, ...prev]);
       setPrompt('');
     } catch (err) {
-      setError('Failed to generate response. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to generate response. Please try again.');
     } finally {
       setLoading(false);
     }
