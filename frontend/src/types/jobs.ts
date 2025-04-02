@@ -27,25 +27,25 @@ export interface JobTypeDistribution {
 }
 
 export interface Job {
-  jobId: string;
+  id: string;
   title: string;
   company: string;
   location: string;
-  salary: string | null;
   description: string;
-  datePosted: string;
-  url: string;
-  applyUrl: string;
+  salary?: string;
   jobType: string;
   experienceLevel: string;
+  datePosted: string;
+  url: string;
+  applicationUrl?: string;
 }
 
 export interface JobResponse {
   topJobTitles: JobTitle[];
   topSkills: Skill[];
-  dailyJobCounts: DailyJobCount[];
   topCompanies: Company[];
   experienceLevelDistribution: ExperienceLevelDistribution;
   jobTypeDistribution: JobTypeDistribution;
+  dailyJobCounts: DailyJobCount[];
   jobs: Job[];
 } 

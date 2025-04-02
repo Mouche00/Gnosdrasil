@@ -21,6 +21,11 @@ public class JobScraperController {
         this.linkedInScraperService = linkedInScraperService;
     }
 
+    @PostMapping("get")
+    public void getJob(@RequestBody SearchParamsDTO request) {
+        linkedInScraperService.scrapeJobs(request);
+    }
+
     @PostMapping("scrape")
     public List<JobListingDTO> startScraping(@RequestBody SearchParamsDTO request) {
         return linkedInScraperService.getAllJobListings(request);

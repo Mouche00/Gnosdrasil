@@ -11,5 +11,5 @@ import java.util.concurrent.Future;
 public interface JobBoardScraperService {
 
     List<JobListingDTO> getAllJobListings(SearchParamsDTO searchParamsDTO);
-    Future<List<JobListingDTO>> scrapeJobs(SearchParamsDTO searchParamsDTO);
+    void scrapeJobs(SearchParamsDTO searchParamsDTO);
 }

@@ -51,7 +51,7 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
     }
 
     @Async
-    public Future<List<JobListingDTO>> scrapeJobs(SearchParamsDTO searchParamsDTO) {
+    public void scrapeJobs(SearchParamsDTO searchParamsDTO) {
         List<JobListing> jobListings = new ArrayList<>();
 //        ScraperResult result = new ScraperResult();
 
@@ -152,7 +152,7 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
 
             log.info("Job scraping completed");
 
-            return CompletableFuture.completedFuture(jobListingMapper.toDTOs(jobListings));
+//            return CompletableFuture.completedFuture(jobListingMapper.toDTOs(jobListings));
         } catch (Exception e) {
             log.error("Error during job scraping", e);
             throw new ScraperException("Error during job scraping: " + e);
