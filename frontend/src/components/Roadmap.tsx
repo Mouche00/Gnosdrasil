@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Roadmap as RoadmapType, RoadmapStep } from '../types/jobs';
+import Resources from './Resources';
 
 interface RoadmapProps {
   data: RoadmapType;
@@ -61,12 +62,17 @@ const Roadmap: React.FC<RoadmapProps> = ({ data }) => {
         </div>
 
         {/* Selected Topic Details */}
-        {selectedStepData && selectedStepData.connectedSteps.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-lg font-medium text-soft-dark">
-              Related Topics for: {selectedStepData.label}
-            </h3>
-            {renderConnectedSteps(selectedStepData.connectedSteps)}
+        {selectedStepData && (
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <h3 className="text-lg font-medium text-soft-dark">
+                Related Topics for: {selectedStepData.label}
+              </h3>
+              {selectedStepData.connectedSteps.length > 0 && renderConnectedSteps(selectedStepData.connectedSteps)}
+            </div>
+
+            {/* Resources Section */}
+            <Resources stepId={selectedStepData.id} stepLabel={selectedStepData.label} />
           </div>
         )}
       </div>

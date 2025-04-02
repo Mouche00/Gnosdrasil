@@ -5,3 +5,11 @@ spring:
 serpapi:
   api:
     key: e53ffd627006643629ab55d24169cbf52a6257c826583bc265aa4ec918f22d8d
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka
+
+server:
+  port: 8088

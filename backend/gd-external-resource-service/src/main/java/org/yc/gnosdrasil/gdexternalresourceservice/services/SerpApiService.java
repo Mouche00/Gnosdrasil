@@ -1,18 +1,26 @@
 package org.yc.gnosdrasil.gdexternalresourceservice.services;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.yc.gnosdrasil.gdexternalresourceservice.clients.SerpApiClient;
 import org.yc.gnosdrasil.gdexternalresourceservice.config.SerpApiConfig;
+import org.yc.gnosdrasil.gdexternalresourceservice.dtos.request.StepRequestDTO;
 import org.yc.gnosdrasil.gdexternalresourceservice.dtos.response.SerpApiResponseDTO;
+import org.yc.gnosdrasil.gdexternalresourceservice.entities.Resource;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SerpApiService {
 
     private final SerpApiClient serpApiClient;
@@ -37,5 +45,29 @@ public class SerpApiService {
         }
 
         return results;
+    }
+
+    public List<Resource> getResources(StepRequestDTO stepRequestDTO) {
+        log.info("StepRequestDTO: {}", stepRequestDTO);
+        List<SerpApiResponseDTO> serpApiResponseDTOS = search(stepRequestDTO.label());
+
+        return serpApiResponseDTOS.stream().map(s -> {
+            try {
+                Document document = Jsoup.connect(s.link())
+                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                        .get();
+
+                return Resource.builder()
+                        .title(s.title())
+                        .link(s.link())
+                        .snippet(s.snippet())
+                        .pageSource(document.html())
+                        .stepId(stepRequestDTO.id())
+                        .build();
+            } catch (IOException e) {
+                // skip if error
+                return null;
+            }
+        }).filter(Objects::nonNull).toList();
     }
 }

@@ -19,6 +19,8 @@ public class Step {
     private String id;
     private String label;
 
+    private List<String> userId;
+
     @Relationship(type = "CONNECTED_TO", direction = Relationship.Direction.OUTGOING)
     private List<Step> connectedSteps = new ArrayList<>();
 

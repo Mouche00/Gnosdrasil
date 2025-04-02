@@ -60,4 +60,12 @@ export interface Roadmap {
   id: string | null;
   title: string;
   steps: RoadmapStep[];
+}
+
+export interface Resource {
+  title: string;
+  link: string;
+  snippet: string;
+  pageSource: string;
+  stepId: string;
 } 

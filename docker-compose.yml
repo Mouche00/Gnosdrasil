@@ -1,0 +1,161 @@
+version: "3.8"
+
+services:
+  gd-user-service-db:
+    image: postgres:17.4-alpine
+    container_name: gd-user-service-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gd-user-service-db
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+#    volumes:
+#      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+
+  gd-roadmap-service-db:
+    image: neo4j:2025.03-community
+    container_name: gd-roadmap-service-db
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/password
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    #    volumes:
+    #      - ./db-data:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "neo4j status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+
+  gd-prompt-processing-service:
+    image: postgres:17.4-alpine
+    container_name: gd-prompt-processing-service
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gd-prompt-processing-service
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+#    env_file:
+#      - .env
+    #    volumes:
+    #      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+#    healthcheck:
+#      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 10
+#      start_period: 30s
+
+
+
+  #  app:
+  #    build:
+  #      context: .
+  #      dockerfile: Dockerfile
+  #    container_name: gd-job-scraper-app
+  #    ports:
+  #      - "8080:8080"
+  #    depends_on:
+  #      - selenium
+  #      - mongodb
+  #    networks:
+  #      - gd-job-scraper-network
+  #    restart: unless-stopped
+  #    healthcheck:
+  #      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+  #      interval: 30s
+  #      timeout: 10s
+  #      retries: 3
+  #      start_period: 40s
+
+#  gd-market-analysis-mongo:
+#    image: mongo:latest
+#    container_name: gd-market-analysis-mongo
+#    restart: unless-stopped
+#    networks:
+#      - gd-job-scraper-network
+#    environment:
+#      MONGO_INITDB_DATABASE: gd-market-analysis-mongo
+#      MONGO_INITDB_ROOT_USERNAME: root
+#      MONGO_INITDB_ROOT_PASSWORD: root
+#    ports:
+#      - "27017:27017"
+#    volumes:
+#      - db:/data/db
+##      - ./seeder.js:/docker-entrypoint-initdb.d/seeder.js:ro
+##      - ./mongo-entrypoint:/docker-entrypoint-initdb.d
+
+
+#services:
+  #  app:
+  #    build:
+  #      context: .
+  #      dockerfile: Dockerfile
+  #    container_name: gd-job-scraper-app
+  #    ports:
+  #      - "8080:8080"
+  #    depends_on:
+  #      - selenium
+  #      - mongodb
+  #    networks:
+  #      - gd-job-scraper-network
+  #    restart: unless-stopped
+  #    healthcheck:
+  #      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+  #      interval: 30s
+  #      timeout: 10s
+  #      retries: 3
+  #      start_period: 40s
+
+  gd-job-scraper-selenium:
+    image: selenium/standalone-chrome:latest
+    container_name: gd-job-scraper-selenium
+    ports:
+      - "4444:4444"
+      - "7900:7900"
+    environment:
+      SE_VNC_NO_PASSWORD: 1
+      SE_NODE_SESSION_TIMEOUT: 300
+      SE_NODE_OVERRIDE_MAX_SESSIONS: true
+      SE_NODE_MAX_SESSIONS: 5
+    shm_size: 2g
+    restart: unless-stopped
+
+  gd-job-scraper-mongodb:
+    image: mongo:latest
+    container_name: gd-job-scraper-mongo
+    restart: unless-stopped
+    networks:
+      - gd-job-scraper-network
+    environment:
+      MONGO_INITDB_DATABASE: gd-job-scraper
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - "27017:27017"
+    volumes:
+      - db:/data/db
+#      - ./seeder.js:/docker-entrypoint-initdb.d/seeder.js:ro
+#      - ./mongo-entrypoint:/docker-entrypoint-initdb.d
+
+volumes:
+  db:
+    driver: local
+
+networks:
+  gd-job-scraper-network:
+    driver: bridge
