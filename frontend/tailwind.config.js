@@ -7,16 +7,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        'neumorphic': {
-          'bg': '#f0f0f0',
-          'shadow-light': '#d1d1d1',
-          'shadow-dark': '#ffffff',
+        'pastel': {
+          'blue': '#7EB6FF',
+          'pink': '#FF8FA3',
+          'purple': '#B8A6FF',
+          'green': '#7ED957',
+          'yellow': '#FFD93D',
+        },
+        'soft': {
+          'gray': '#F5F5F5',
+          'dark': '#2D3748',
         }
       },
       boxShadow: {
-        'neumorphic': '8px 8px 16px #d1d1d1, -8px -8px 16px #ffffff',
-        'neumorphic-inner': 'inset 4px 4px 8px #d1d1d1, inset -4px -4px 8px #ffffff',
+        'neumorphic': '20px 20px 60px #d9d9d9, -20px -20px 60px #ffffff',
+        'neumorphic-sm': '10px 10px 30px #d9d9d9, -10px -10px 30px #ffffff',
       },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+      }
     },
   },
   plugins: [],
