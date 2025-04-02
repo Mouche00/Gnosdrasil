@@ -27,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.yc.gnosdrasil.gdboardscraperservice.utils.helpers.UrlHelper.buildSearchUrl;
 
 /**
@@ -45,12 +46,13 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
     public List<JobListingDTO> getAllJobListings(SearchParamsDTO searchParamsDTO) {
         List<JobListingDTO> jobListingDTOS = jobListingMapper.toDTOs(jobBoardScraperRepository.findAll());
         log.info("Found {} job listings, first one {}", jobListingDTOS.size(), jobListingDTOS.get(0));
+//        scrapeJobs(searchParamsDTO);
         return jobListingDTOS;
     }
 
     @Async
-    public void scrapeJobs(SearchParamsDTO searchParamsDTO) {
-//        List<JobListing> jobListings = new ArrayList<>();
+    public Future<List<JobListingDTO>> scrapeJobs(SearchParamsDTO searchParamsDTO) {
+        List<JobListing> jobListings = new ArrayList<>();
 //        ScraperResult result = new ScraperResult();
 
         log.info("Starting scraping job with config {}", config.getJobSelectors());
@@ -126,8 +128,8 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
                         seleniumHelper.waitForElement(config.getJobDetailsElementLocator());
 
                         JobListing job = extractJobListing(jobItem);
-//                        job.setSearchParams(searchParamsDTO);
-//                        jobListings.add(job);
+                        job.setSearchParams(new SearchParams(searchParamsDTO.keywords(), searchParamsDTO.location(), searchParamsDTO.experienceLevel(), searchParamsDTO.date()));
+                        jobListings.add(job);
                     }
                 } catch (Exception e) {
                     log.error("Error extracting job listing", e);
@@ -150,7 +152,7 @@ public class JobBoardScraperServiceImpl implements JobBoardScraperService {
 
             log.info("Job scraping completed");
 
-//            return jobListingMapper.toDTOs(jobBoardScraperRepository.findAll());
+            return CompletableFuture.completedFuture(jobListingMapper.toDTOs(jobListings));
         } catch (Exception e) {
             log.error("Error during job scraping", e);
             throw new ScraperException("Error during job scraping: " + e);

@@ -14,6 +14,7 @@ import org.yc.gnosdrasil.gdroadmapservice.services.RoadmapService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +28,12 @@ public class RoadmapServiceImpl implements RoadmapService {
         return roadmapClient.fetch(language);
     }
 
-    public List<Step> constructStepGraph(String language) {
+    public Roadmap constructStepGraph(String language) {
+        Optional<Roadmap> existingRoadmap = roadmapRepository.findByTitle(language);
+        if (existingRoadmap.isPresent()) {
+            return existingRoadmap.get();
+        }
+
         RoadmapResponseDTO roadmapDTO = getRoadmap(language);
         log.info("Constructing step graph for language {} with roadmap {}", language, roadmapDTO);
         List<Step> savedNodes = new ArrayList<>();
@@ -68,6 +74,6 @@ public class RoadmapServiceImpl implements RoadmapService {
         // Optionally save the roadmap if needed
          roadmapRepository.save(roadmap);
 
-        return stepRepository.findAll();
+        return roadmapRepository.save(roadmap);
     }
 }

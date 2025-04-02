@@ -2,6 +2,7 @@ package org.yc.gnosdrasil.gdmarketanalysisservice.model;
 
 import lombok.Data;
 
+import java.lang.annotation.Documented;
 import java.util.List;
 import java.util.Map;
 

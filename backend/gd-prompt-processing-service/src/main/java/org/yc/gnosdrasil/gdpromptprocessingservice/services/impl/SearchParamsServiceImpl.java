@@ -3,10 +3,10 @@ package org.yc.gnosdrasil.gdpromptprocessingservice.services.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.yc.gnosdrasil.gdpromptprocessingservice.client.JobAnalysisClient;
 import org.yc.gnosdrasil.gdpromptprocessingservice.client.JobBoardScraperClient;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.JobListingDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.PromptRequestDTO;
-import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.SearchParamsDTO;
+import org.yc.gnosdrasil.gdpromptprocessingservice.client.RoadmapClient;
+import org.yc.gnosdrasil.gdpromptprocessingservice.dtos.*;
 import org.yc.gnosdrasil.gdpromptprocessingservice.entity.LanguageIntent;
 import org.yc.gnosdrasil.gdpromptprocessingservice.entity.NLPResult;
 import org.yc.gnosdrasil.gdpromptprocessingservice.entity.SearchParams;
@@ -27,7 +27,8 @@ public class SearchParamsServiceImpl implements SearchParamsService {
 
     private final NLPService nlpService;
     private final SearchParamsMapper searchParamsMapper;
-    private final JobBoardScraperClient jobBoardScraperClient;
+    private final JobAnalysisClient jobAnalysisClient;
+    private final RoadmapClient roadmapClient;
 
     private SearchParamsDTO generateSearchParams(String prompt) {
         try {
@@ -46,9 +47,18 @@ public class SearchParamsServiceImpl implements SearchParamsService {
     }
 
     @Override
-    public List<JobListingDTO> getJobListings(PromptRequestDTO promptRequestDTO) {
+    public JobAnalysisDTO getAnalysis(PromptRequestDTO promptRequestDTO) {
         SearchParamsDTO searchParamsDTO = generateSearchParams(promptRequestDTO.prompt());
-        return List.of(JobListingDTO.builder().build());
-//        return jobBoardScraperClient.startScraping(searchParamsDTO);
+        return jobAnalysisClient.analyse(searchParamsDTO);
+    }
+
+    public RoadmapResponseDTO getRoadmap(PromptRequestDTO promptRequestDTO) {
+        SearchParamsDTO searchParamsDTO = generateSearchParams(promptRequestDTO.prompt());
+        return roadmapClient.getRoadmap(searchParamsDTO);
+    }
+
+    public GlobalResponseDTO getGlobalResponse(PromptRequestDTO promptRequestDTO) {
+        SearchParamsDTO searchParamsDTO = generateSearchParams(promptRequestDTO.prompt());
+        return new GlobalResponseDTO(jobAnalysisClient.analyse(searchParamsDTO), roadmapClient.getRoadmap(searchParamsDTO));
     }
 }

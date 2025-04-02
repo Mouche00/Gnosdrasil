@@ -10,6 +10,7 @@ import org.yc.gnosdrasil.gdboardscraperservice.repositories.JobBoardScraperRepos
 import org.yc.gnosdrasil.gdboardscraperservice.services.JobBoardScraperService;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/api/board")

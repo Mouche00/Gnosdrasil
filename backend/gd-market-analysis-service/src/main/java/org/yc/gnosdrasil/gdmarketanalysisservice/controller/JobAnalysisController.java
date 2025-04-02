@@ -2,9 +2,8 @@ package org.yc.gnosdrasil.gdmarketanalysisservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.yc.gnosdrasil.gdmarketanalysisservice.dtos.JobAnalysisDTO;
 import org.yc.gnosdrasil.gdmarketanalysisservice.dtos.SearchParamsDTO;
 import org.yc.gnosdrasil.gdmarketanalysisservice.model.JobTrendAnalysis;
 import org.yc.gnosdrasil.gdmarketanalysisservice.service.JobAnalysisService;
@@ -15,8 +14,8 @@ import org.yc.gnosdrasil.gdmarketanalysisservice.service.JobAnalysisService;
 public class JobAnalysisController {
     private final JobAnalysisService jobAnalysisService;
 
-    @GetMapping("/trends")
-    public ResponseEntity<JobTrendAnalysis> getJobTrends(SearchParamsDTO searchParamsDTO) {
-        return ResponseEntity.ok(jobAnalysisService.analyzeJobTrends(searchParamsDTO));
+    @PostMapping("/trends")
+    public JobAnalysisDTO getJobTrends(@RequestBody SearchParamsDTO searchParamsDTO) {
+        return jobAnalysisService.analyzeJobTrends(searchParamsDTO);
     }
 } 

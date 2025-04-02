@@ -6,5 +6,5 @@ import org.yc.gnosdrasil.gdroadmapservice.entities.Step;
 import java.util.List;
 
 public interface RoadmapService {
-    List<Step> constructStepGraph(String language);
+    Roadmap constructStepGraph(String language);
 }
